@@ -335,9 +335,39 @@ class CUAR_PrivateContentTable extends CUAR_ListTable
     /**
      * @return bool true if the current user is allowed to delete items
      */
-    protected function current_user_can_delete()
+    protected function current_user_can_delete($post_id = null)
     {
-        return current_user_can($this->post_type_object->cap->delete_post);
+	    // bail if post type is not expected
+	    if(!empty($post_id) && $this->post_type !== get_post_type((int) $post_id)) {
+		    return false;
+	    }
+
+	    // checking that the user is allowed to delete a given post
+	    if(!empty($post_id))
+	    {
+		    if(!current_user_can($this->post_type_object->cap->delete_posts))
+		    {
+			    return false;
+		    }
+
+		    $po_addon = cuar_addon('post-owner');
+		    $post_type_object = get_post_type_object(get_post_type((int) $post_id));
+
+		    if(is_admin() && current_user_can($post_type_object->cap->read_private_posts)) {
+			    return true;
+		    }
+
+		    if($po_addon->is_user_owner_of_post((int) $post_id, get_current_user_id())
+		       || get_current_user_id() === ((int) (get_post((int) $post_id)->post_author)))
+		    {
+			    return true;
+		    }
+
+		    return false;
+	    }
+
+	    // checking that the user is allowed to delete posts in case post_id is not defined
+	    return current_user_can($this->post_type_object->cap->delete_posts);
     }
 
     /**

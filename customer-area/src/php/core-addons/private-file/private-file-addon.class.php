@@ -1288,7 +1288,7 @@ if (!class_exists('CUAR_PrivateFileAddOn')) :
                 'capabilities' => [
                     'edit_post' => 'cuar_pf_edit',
                     'edit_posts' => 'cuar_pf_edit',
-                    'edit_others_posts' => 'cuar_pf_edit',
+                    'edit_others_posts' => 'cuar_pf_list_all',
                     'publish_posts' => 'cuar_pf_edit',
                     'read_post' => 'cuar_pf_read',
                     'read_private_posts' => 'cuar_pf_list_all',

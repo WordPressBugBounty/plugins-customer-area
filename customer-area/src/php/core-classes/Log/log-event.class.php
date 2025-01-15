@@ -72,7 +72,23 @@ class CUAR_LogEvent extends CUAR_CustomPost
             'rewrite'             => false,
             'capability_type'     => 'post',
             'supports'            => array('title', 'editor'),
-            'can_export'          => true
+            'can_export'          => true,
+            'capabilities' => array(
+	            'edit_post' => 'manage_options',
+	            'delete_post' => 'manage_options',
+	            'read_post' => 'manage_options',
+	            'edit_others_posts' => 'manage_options',
+	            'delete_posts' => 'manage_options',
+	            'publish_posts' => 'manage_options',
+	            'create_posts' => 'manage_options',
+	            'read_private_posts' => 'manage_options',
+	            'delete_private_posts' => 'manage_options',
+	            'delete_published_posts' => 'manage_options',
+	            'delete_others_posts' => 'manage_options',
+	            'edit_private_posts' => 'manage_options',
+	            'edit_published_posts' => 'manage_options',
+	            'edit_posts' => 'manage_options',
+            )
         );
 
         register_post_type(self::$POST_TYPE, $log_args);

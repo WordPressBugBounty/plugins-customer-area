@@ -71,6 +71,7 @@ class CUAR_PaymentTable extends CUAR_ListTable
         $this->parameters['event-type'] = isset($form_data['event-type']) ? $form_data['event-type'] : 0;
         $this->parameters['start-date'] = isset($form_data['start-date']) ? sanitize_text_field($form_data['start-date']) : null;
         $this->parameters['end-date'] = isset($form_data['end-date']) ? sanitize_text_field($form_data['end-date']) : null;
+	    $this->parameters['_wpnonce'] = isset($form_data['_wpnonce']) ? sanitize_key($form_data['_wpnonce']) : '';
     }
 
     /**
@@ -253,7 +254,7 @@ class CUAR_PaymentTable extends CUAR_ListTable
 
         $row_actions['delete'] = sprintf('<a href="%1$s" title="%2$s this post">%2$s</a>',
             wp_nonce_url(add_query_arg(array('action' => 'delete', 'posts' => $item->ID), $this->base_url),
-                'cuar_content_row_nonce'),
+                'cuar_content_row_nonce_' . $this->post_type . '_delete_' . $item->ID),
             __('Delete', 'cuar'));
 
         return $row_actions;
@@ -264,7 +265,7 @@ class CUAR_PaymentTable extends CUAR_ListTable
      */
     public function get_bulk_actions()
     {
-        $actions = array(
+	    $actions = array(
             'delete' => __('Delete permanently', 'cuar')
         );
 
@@ -284,14 +285,38 @@ class CUAR_PaymentTable extends CUAR_ListTable
      */
     protected function execute_action($action, $post_id)
     {
+	    if (empty($action))
+	    {
+		    return;
+	    }
+
+	    if(isset($_GET['bulk_action'])) {
+		    if (!check_admin_referer('bulk-' . $this->_args['plural']))
+		    {
+			    wp_die(esc_html__("Trying to cheat?", 'cuar'));
+		    }
+	    } else
+	    {
+		    if (!wp_verify_nonce(
+				$this->parameters['_wpnonce'],
+			    'cuar_content_row_nonce_' . get_post_type($post_id) . '_' . $action . '_' . $post_id))
+		    {
+			    wp_die(esc_html__("Trying to cheat?", 'cuar'));
+		    }
+	    }
+
         switch ($action) {
             case 'delete':
-                if ( !current_user_can('delete_post', $post_id)) {
-                    wp_die(__('You are not allowed to delete this item.', 'cuar'));
+                if ( !$this->current_user_can_delete($post_id)) {
+                    wp_die(esc_html__('You are not allowed to delete this item.', 'cuar'));
                 }
 
                 wp_delete_post($post_id, true);
                 break;
+
+	        default:
+		        wp_die(esc_html__('Invalid action', 'cuar'));
+				break;
         }
 
         // Status change
@@ -309,9 +334,39 @@ class CUAR_PaymentTable extends CUAR_ListTable
     /**
      * @return bool true if the current user is allowed to delete items
      */
-    protected function current_user_can_delete()
+    protected function current_user_can_delete($post_id = null)
     {
-        return current_user_can('cuar_pay_delete');
+	    // bail if post type is not expected
+	    if(!empty($post_id) && $this->post_type !== get_post_type($post_id)) {
+		    return false;
+	    }
+
+	    // checking that the user is allowed to delete a given post
+	    if(!empty($post_id))
+	    {
+		    if(!current_user_can($this->post_type_object->cap->delete_posts))
+		    {
+			    return false;
+		    }
+
+		    $po_addon = cuar_addon('post-owner');
+		    $post_type_object = get_post_type_object(get_post_type($post_id));
+
+		    if(is_admin() && current_user_can($post_type_object->cap->read_private_posts)) {
+			    return true;
+		    }
+
+		    if($po_addon->is_user_owner_of_post($post_id, get_current_user_id())
+		       || get_current_user_id() === ((int) (get_post($post_id)->post_author)))
+		    {
+			    return true;
+		    }
+
+		    return false;
+	    }
+
+	    // checking that the user is allowed to delete posts in case post_id is not defined
+	    return current_user_can($this->post_type_object->cap->delete_posts);
     }
 
 }

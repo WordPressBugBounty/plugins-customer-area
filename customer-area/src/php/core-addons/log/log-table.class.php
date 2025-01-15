@@ -28,6 +28,8 @@ require_once(CUAR_INCLUDES_DIR . '/core-classes/Content/list-table.class.php');
 class CUAR_LogTable extends CUAR_ListTable
 {
 
+	/** @var string The post type to be displayed by this table */
+	public $post_type = null;
     public $content_types = array();
     public $displayable_meta = array();
 
@@ -48,6 +50,7 @@ class CUAR_LogTable extends CUAR_ListTable
             admin_url('admin.php?page=wpca-logs'),
             'CUAR_LogEvent');
 
+		$this->post_type = CUAR_LogEvent::$POST_TYPE;
         $this->displayable_meta = apply_filters('cuar/core/log/table-displayable-meta', array());
         $this->content_types = array_merge($this->plugin->get_content_types(), $this->plugin->get_container_types());
     }
@@ -66,6 +69,7 @@ class CUAR_LogTable extends CUAR_ListTable
         $this->parameters['event-type'] = isset($form_data['event-type']) ? $form_data['event-type'] : 0;
         $this->parameters['start-date'] = isset($form_data['start-date']) ? sanitize_text_field($form_data['start-date']) : null;
         $this->parameters['end-date'] = isset($form_data['end-date']) ? sanitize_text_field($form_data['end-date']) : null;
+		$this->parameters['_wpnonce'] = isset($form_data['_wpnonce']) ? sanitize_key($form_data['_wpnonce']) : '';
     }
 
     /**
@@ -267,8 +271,19 @@ class CUAR_LogTable extends CUAR_ListTable
      */
     public function process_bulk_action()
     {
-        if (isset($_REQUEST['delete_all']) && !empty($_REQUEST['delete_all'])) {
-            if ( !current_user_can('delete_posts')) {
+		if (empty($_GET['cuar-do-logs-action']))
+		{
+			return;
+		}
+
+		if (!check_admin_referer('bulk-' . $this->_args['plural']))
+		{
+			wp_die(esc_html__("Trying to cheat?", 'cuar'));
+		}
+
+        if (!empty($_REQUEST['delete_all'])) {
+
+            if ( !$this->current_user_can_delete()) {
                 wp_die(__('You are not allowed to delete logs.', 'cuar'));
             }
 
@@ -298,9 +313,19 @@ class CUAR_LogTable extends CUAR_ListTable
      */
     protected function execute_action($action, $post_id)
     {
+		if (empty($action))
+		{
+			return;
+		}
+
+		if (!check_admin_referer('bulk-' . $this->_args['plural']))
+		{
+			wp_die(esc_html__("Trying to cheat?", 'cuar'));
+		}
+
         switch ($action) {
             case 'delete':
-                if ( !current_user_can('delete_post', $post_id)) {
+                if ( !$this->current_user_can_delete($post_id)) {
                     wp_die(__('You are not allowed to delete this item.', 'cuar'));
                 }
 
@@ -312,9 +337,15 @@ class CUAR_LogTable extends CUAR_ListTable
     /**
      * @return bool true if the current user is allowed to delete items
      */
-    protected function current_user_can_delete()
+    protected function current_user_can_delete($post_id = null)
     {
-        return current_user_can('delete_posts');
+		// bail if post type is not expected
+		if(!empty($post_id) && $this->post_type !== get_post_type((int) $post_id)) {
+			return false;
+		}
+
+		$post_type_object = get_post_type_object($this->post_type);
+        return current_user_can($post_type_object->cap->delete_private_posts);
     }
 
     /**

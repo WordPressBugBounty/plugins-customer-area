@@ -28,11 +28,11 @@ if (!class_exists('CUAR_PrivatePageAddOn')) :
 * @author Vincent Prat @ Foobar Studio
 */
 class CUAR_PrivatePageAddOn extends CUAR_AddOn {
-	
+
 	public function __construct() {
 		parent::__construct('private-pages');
 	}
-	
+
 	public function get_addon_name() {
 		return __( 'Private Pages', 'cuar' );
 	}
@@ -42,38 +42,38 @@ class CUAR_PrivatePageAddOn extends CUAR_AddOn {
 			add_action( 'init', array( &$this, 'register_custom_types' ) );
 			add_filter( 'cuar/core/post-types/content', array( &$this, 'register_private_post_types' ) );
 			add_filter( 'cuar/core/types/content', array( &$this, 'register_content_type' ) );
-			
+
 			add_filter( 'cuar/core/permission-groups', array( &$this, 'get_configurable_capability_groups' ) );
 		}
-				
+
 		// Init the admin interface if needed
 		if ( is_admin() ) {
 			$this->admin_interface = new CUAR_PrivatePageAdminInterface( $plugin, $this );
 		}
-	}	
-	
+	}
+
 	/**
 	 * Set the default values for the options
-	 * 
+	 *
 	 * @param array $defaults
 	 * @return array
 	 */
 	public function set_default_options( $defaults ) {
 		$defaults = parent::set_default_options($defaults);
-		
+
 		$defaults[ self::$OPTION_ENABLE_ADDON ] = true;
-		
+
 		return $defaults;
 	}
 
 	/*------- SETTINGS ACCESSORS ------------------------------------------------------------------------------------*/
-	
+
 	public function is_enabled() {
 		return $this->plugin->get_option( self::$OPTION_ENABLE_ADDON );
 	}
-		
+
 	/*------- FUNCTIONS TO ACCESS THE POST META ----------------------------------------------------------------------*/
-	
+
 	/**
 	 * Get the number of times the page has been viewed
 	 *
@@ -81,11 +81,11 @@ class CUAR_PrivatePageAddOn extends CUAR_AddOn {
 	 * @return int
 	 */
 	public function get_page_view_count( $post_id ) {
-		$count = get_post_meta( $post_id, 'cuar_private_page_view_count', true );	
-		if ( !$count || empty( $count ) ) return 0;	
+		$count = get_post_meta( $post_id, 'cuar_private_page_view_count', true );
+		if ( !$count || empty( $count ) ) return 0;
 		return intval( $count );
 	}
-	
+
 	/**
 	 * Get the number of times the page has been viewed
 	 *
@@ -93,13 +93,13 @@ class CUAR_PrivatePageAddOn extends CUAR_AddOn {
 	 * @return int
 	 */
 	public function increment_page_view_count( $post_id ) {
-		update_post_meta( $post_id, 
-			'cuar_private_page_view_count', 
+		update_post_meta( $post_id,
+			'cuar_private_page_view_count',
 			$this->get_page_download_count( $post_id ) + 1 );
 	}
 
 	/*------- INITIALISATIONS ----------------------------------------------------------------------------------------*/
-	
+
 	public function get_configurable_capability_groups( $capability_groups ) {
 		$capability_groups[ 'cuar_private_page' ] = array(
 				'label'		=> __( 'Private Pages', 'cuar' ),
@@ -126,10 +126,10 @@ class CUAR_PrivatePageAddOn extends CUAR_AddOn {
 							)
 					)
 			);
-		
+
 		return $capability_groups;
 	}
-	
+
 	/**
 	 * Declare our content type
 	 * @param array $types
@@ -144,7 +144,7 @@ class CUAR_PrivatePageAddOn extends CUAR_AddOn {
 			);
 		return $types;
 	}
-	
+
 	/**
 	 * Declare that our post type is owned by someone
 	 * @param array $types
@@ -154,7 +154,7 @@ class CUAR_PrivatePageAddOn extends CUAR_AddOn {
 		$types[] = "cuar_private_page";
 		return $types;
 	}
-	
+
 	/**
 	 * Register the custom post type for files and the associated taxonomies
 	 */
@@ -192,7 +192,7 @@ class CUAR_PrivatePageAddOn extends CUAR_AddOn {
 				'capabilities' 			=> array(
 						'edit_post' 			=> 'cuar_pp_edit',
 						'edit_posts' 			=> 'cuar_pp_edit',
-						'edit_others_posts' 	=> 'cuar_pp_edit',
+						'edit_others_posts' 	=> 'cuar_pp_list_all',
 						'publish_posts' 		=> 'cuar_pp_edit',
 						'read_post' 			=> 'cuar_pp_read',
 						'read_private_posts' 	=> 'cuar_pp_list_all',
@@ -222,7 +222,7 @@ class CUAR_PrivatePageAddOn extends CUAR_AddOn {
 						'cuar' ),
 				'menu_name' 				=> _x( 'Page Categories', 'cuar_private_page_category', 'cuar' ),
 			);
-	  
+
 		$args = array(
 				'labels' 			=> $labels,
 				'public' 			=> true,
@@ -241,13 +241,13 @@ class CUAR_PrivatePageAddOn extends CUAR_AddOn {
 						'assign_terms' 		=> 'cuar_pp_assign_categories',
 					)
 			);
-	  
+
 		register_taxonomy( 'cuar_private_page_category', array( 'cuar_private_page' ), apply_filters( 'cuar/private-content/pages/category/register-taxonomy-args', $args ) );
 	}
 
 	// General options
 	public static $OPTION_ENABLE_ADDON					= 'enable_private_pages';
-	
+
 	/** @var CUAR_PrivatePageAdminInterface */
 	private $admin_interface;
 }
@@ -255,4 +255,4 @@ class CUAR_PrivatePageAddOn extends CUAR_AddOn {
 // Make sure the addon is loaded
 new CUAR_PrivatePageAddOn();
 
-endif; // if (!class_exists('CUAR_PrivatePageAddOn')) 
+endif; // if (!class_exists('CUAR_PrivatePageAddOn'))

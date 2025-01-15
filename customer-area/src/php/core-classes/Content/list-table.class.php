@@ -95,6 +95,7 @@ abstract class CUAR_ListTable extends WP_List_Table
     {
         $this->parameters['status'] = isset($form_data['status']) ? $form_data['status'] : 'any';
         $this->parameters['posts'] = isset($form_data['posts']) ? $form_data['posts'] : array();
+		$this->parameters['_wpnonce'] = isset($form_data['_wpnonce']) ? sanitize_key($form_data['_wpnonce']) :  null;
 
         if ($this->parameters['status'] == 'trash')
         {
@@ -332,19 +333,19 @@ abstract class CUAR_ListTable extends WP_List_Table
                 $row_actions['untrash'] = sprintf('<a href="%1$s" title="%2$s this post">%2$s</a>',
                     wp_nonce_url(add_query_arg(array('action' => 'cuar-untrash', 'posts' => $item->ID),
                         $this->base_url),
-                        'cuar_content_row_nonce'),
+						'cuar_content_row_nonce_' . $this->post_type . '_cuar-untrash_' . $item->ID),
                     __('Restore', 'cuar'));
 
                 $row_actions['delete'] = sprintf('<a href="%1$s" title="%2$s this post">%2$s</a>',
                     wp_nonce_url(add_query_arg(array('action' => 'cuar-delete', 'posts' => $item->ID), $this->base_url),
-                        'cuar_content_row_nonce'),
+                        'cuar_content_row_nonce_' . $this->post_type . '_cuar-delete_' . $item->ID),
                     __('Delete permanently', 'cuar'));
             }
             else
             {
                 $row_actions['trash'] = sprintf('<a href="%1$s" title="%2$s this post">%2$s</a>',
                     wp_nonce_url(add_query_arg(array('action' => 'cuar-trash', 'posts' => $item->ID), $this->base_url),
-                        'cuar_content_row_nonce'),
+						'cuar_content_row_nonce_' . $this->post_type . '_cuar-trash_' . $item->ID),
                     __('Trash', 'cuar'));
             }
         }
@@ -420,7 +421,17 @@ abstract class CUAR_ListTable extends WP_List_Table
      */
     public function process_bulk_action()
     {
-        $action = $this->current_action();
+		$action = $this->current_action();
+		if (empty($action))
+		{
+			return;
+		}
+
+		if (isset($_GET['bulk_action']) && !check_admin_referer('bulk-' . $this->_args['plural']))
+		{
+			wp_die(esc_html__("Trying to cheat?", 'cuar'));
+		}
+
         $posts = $this->parameters['posts'];
 
         if (isset($_REQUEST['delete_all']) && !empty($_REQUEST['delete_all']))
@@ -441,7 +452,7 @@ abstract class CUAR_ListTable extends WP_List_Table
 
         foreach ($posts as $post_id)
         {
-            if (get_post_type($post_id)===false)
+            if (get_post_type($post_id)===false || $this->post_type !== get_post_type($post_id))
             {
                 continue;
             }
@@ -458,10 +469,30 @@ abstract class CUAR_ListTable extends WP_List_Table
      */
     protected function execute_action($action, $post_id)
     {
+		if (empty($action))
+		{
+			return;
+		}
+
+		if(isset($_GET['bulk_action'])) {
+			if (!check_admin_referer('bulk-' . $this->_args['plural']))
+			{
+				wp_die(esc_html__("Trying to cheat?", 'cuar'));
+			}
+		} else
+		{
+			if (!wp_verify_nonce(
+				$this->parameters['_wpnonce'],
+				'cuar_content_row_nonce_' . get_post_type($post_id) . '_' . $action . '_' . $post_id))
+			{
+				wp_die(esc_html__("Trying to cheat?", 'cuar'));
+			}
+		}
+
         switch ($action)
         {
             case 'cuar-untrash':
-                if ( !$this->current_user_can_delete())
+                if ( !$this->current_user_can_delete($post_id))
                 {
                     wp_die(__('You are not allowed to restore this item.', 'cuar'));
                 }
@@ -469,7 +500,7 @@ abstract class CUAR_ListTable extends WP_List_Table
                 break;
 
             case 'cuar-trash':
-                if ( !$this->current_user_can_delete())
+                if ( !$this->current_user_can_delete($post_id))
                 {
                     wp_die(__('You are not allowed to move this item to trash.', 'cuar'));
                 }
@@ -477,7 +508,7 @@ abstract class CUAR_ListTable extends WP_List_Table
                 break;
 
             case 'cuar-delete':
-                if ( !$this->current_user_can_delete())
+                if ( !$this->current_user_can_delete($post_id))
                 {
                     wp_die(__('You are not allowed to delete this item.', 'cuar'));
                 }
@@ -489,7 +520,7 @@ abstract class CUAR_ListTable extends WP_List_Table
     /**
      * @return bool true if the current user is allowed to delete items
      */
-    protected function current_user_can_delete()
+    protected function current_user_can_delete($post_id = null)
     {
         return false;
     }
