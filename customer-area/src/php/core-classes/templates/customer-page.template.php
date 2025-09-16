@@ -57,7 +57,14 @@ $cuar_content_max_width_dashboard = $this->page_description['slug'] == 'customer
             <aside id="cuar-js-tray" class="cuar-page-sidebar tray tray-right va-t cuar-clearfix">
                 <div id="cuar-js-tray-scroller" class="tray-scroller">
                     <div id="cuar-js-tray-scroller-wrapper">
-                        <?php $this->print_page_sidebar($args, $shortcode_content); ?>
+                        <?php
+						$this->print_page_sidebar($args, $shortcode_content);
+
+						// Forcer le rendu du menu WPCA si la sidebar est vide
+						if (function_exists('cuar_get_the_customer_area_menu')) {
+							cuar_get_the_customer_area_menu();
+						}
+						?>
                     </div>
                 </div>
             </aside>

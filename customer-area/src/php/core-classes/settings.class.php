@@ -988,11 +988,19 @@ if (!class_exists('CUAR_Settings')) :
          */
         public static function ajax_validate_license()
         {
+
+			check_ajax_referer('cuar-validate-license', 'security');
+
+			if (! current_user_can('manage_options')) {
+				wp_send_json_error( __( 'You do not have permission to perform this action.', 'cuar' ) );
+				wp_die();
+			}
+
             $cuar_plugin = cuar();
 
-            $addon_id = $_POST["addon_id"];
-            $api_key = $_POST["api_key"];
-            $product_id = isset($_POST['product_id']) ? $_POST['product_id'] : '';
+            $addon_id = sanitize_text_field($_POST["addon_id"]);
+            $api_key = sanitize_text_field($_POST["api_key"]);
+            $product_id = isset($_POST['product_id']) ? sanitize_text_field($_POST['product_id']) : '';
 
             /** @var CUAR_AddOn $addon */
             $addon = $cuar_plugin->get_addon($addon_id);
@@ -1014,8 +1022,7 @@ if (!class_exists('CUAR_Settings')) :
             // Tell WordPress to look for updates
             set_site_transient('update_plugins', null);
 
-            echo json_encode($result);
-            exit;
+            wp_send_json_success($result);
         }
 
         /* ------------ FIELDS OUTPUT ----------------------------------------------------------------------------------- */

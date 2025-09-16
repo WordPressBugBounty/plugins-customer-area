@@ -168,6 +168,18 @@ if (!class_exists('CUAR_InstallerAddOn')) :
          */
         public function create_pages_and_navigation()
         {
+
+			// Anti CSRF
+			check_ajax_referer('cuar_installer_create_pages_and_nav_nonce', 'security');
+
+			// Vérification des capacités
+			if ( ! current_user_can( 'manage_options' ) ) {
+				wp_send_json( [
+					'success' => false,
+					'message' => __( 'You do not have the required capabilities to perform this action.', 'cuar' ),
+				]);
+			}
+
             // Use the Customer Pages add-on to do the job
             /** @var CUAR_CustomerPagesAddOn $cp_addon */
             $cp_addon = $this->plugin->get_addon('customer-pages');

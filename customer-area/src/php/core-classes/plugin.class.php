@@ -263,6 +263,7 @@ if (!class_exists('CUAR_Plugin')) :
                     'cuar'),
                 'addressActionsNeedAtLeastOneOwner'        => __('No owner is currently selected, the action cannot be executed.',
                     'cuar'),
+				'licenseNonce'							   => wp_create_nonce('cuar-validate-license'),
             ]);
             wp_register_script(
                 'cuar.admin',

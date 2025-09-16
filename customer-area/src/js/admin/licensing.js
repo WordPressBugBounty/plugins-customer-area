@@ -79,7 +79,8 @@ function activateLicense($, licenseControl)
         action    : 'cuar_validate_license',
         addon_id  : getLicenseControlAddOn(licenseControl),
         api_key   : licenseKey,
-        product_id: productId
+        product_id: productId,
+        security  : cuar.licenseNonce
     };
 
     $.post(cuar.ajaxUrl, data, function (response)

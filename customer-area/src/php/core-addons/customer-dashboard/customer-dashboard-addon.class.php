@@ -59,7 +59,6 @@ if (!class_exists('CUAR_CustomerDashboardAddOn')) :
         public function run_addon($plugin)
         {
             parent::run_addon($plugin);
-
             // Widget area for our sidebar
             $this->enable_sidebar();
 
