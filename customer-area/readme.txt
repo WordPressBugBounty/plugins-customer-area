@@ -1,11 +1,11 @@
 === WP Customer Area ===
 
-Contributors: 		  foobarstudio, vprat, tlartaud, aguilatechnologies
+Contributors: 		  aguilatechnologies, foobarstudio, vprat, tlartaud
 Donate link:        https://wp-customerarea.com/shop/
 Tags:               private files,client area,customer area,client portal,customer portal,user files,secure area,crm,project,project management,access control,files
 Requires at least:  5.0
-Tested up to:       6.5.4
-Stable tag:         8.2.7
+Tested up to:       6.9
+Stable tag:         8.3.3
 License:            GPLv2 or later
 License URI:        http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -99,6 +99,24 @@ Contributions are welcome. The plugin has a [Gitlab repository for contributors]
 feel free to fork the project and send us pull requests!
 
 == Changelog ==
+
+= 8.3.4 (2026/02/05) =
+
+* Fix: Licenses validation and error messages
+
+= 8.3.3 (2026/01/15) =
+
+* Fix: Licenses check stuck on activation/validation
+
+= 8.3.2 (2025/12/12) =
+
+* Fix: Compatibility with WP 6.9
+
+= 8.3.1 (2025/11/28) =
+
+* Security: Fixed Local File Inclusion (LFI) vulnerability in file download feature
+* Security: Added strict path validation to prevent directory traversal attacks
+* Security: Improved file access controls and sanitization
 
 = 8.2.7 (2025/09/16) =
 
