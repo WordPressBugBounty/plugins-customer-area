@@ -889,8 +889,8 @@ if (!class_exists('CUAR_AbstractEditContentPageAddOn')) :
             check_ajax_referer('cuar_insert_image', 'nonce');
 
             // Prepare datas
-            $posted_data = isset($_POST) ? $_POST : null;
-            $file_data = isset($_FILES) ? $_FILES : null;
+            $posted_data = isset($_POST) ? $_POST : [];
+            $file_data = isset($_FILES) ? $_FILES : [];
             $data = array_merge($posted_data, $file_data);
             $post_type = isset($data['post_type']) ? $data['post_type'] : null;
             $post_id = isset($data['post_id']) ? $data['post_id'] : null;
@@ -912,50 +912,93 @@ if (!class_exists('CUAR_AbstractEditContentPageAddOn')) :
                 wp_send_json_error(__('Oops! Security check failed!', 'cuar'));
             }
 
+
+            // Keep raw values for hash check
+            $subdir_raw = isset($data['subdir']) ? (string)$data['subdir'] : '';
+            $name_raw = isset($data['name']) ? (string)$data['name'] : '';
+            $hash_raw = isset($data['hash']) ? (string)$data['hash'] : '';
+
             // Check hash
-            $hash_check = md5($data['subdir'] . $user_check->data->user_login);
-            if ($hash_check !== $data['hash'])
+            $hash_check = md5($subdir_raw . $user_check->data->user_login);
+            if ($hash_check !== $hash_raw)
             {
                 wp_send_json_error(__('Oops! Security check failed!', 'cuar'));
             }
 
-            // Suppress parent dots
-            $data['subdir'] = ltrim($data['subdir'], '/.');
-            $data['name'] = ltrim($data['name'], '/.');
+            // Normalize and validate path parts
+            $subdir = trim(wp_normalize_path($subdir_raw), '/');
+            $name = trim(wp_normalize_path($name_raw), '/');
 
-            // Reconstruct image path
+            if (
+                $name === ''
+                || strpos($name, "\0") !== false
+                || strpos($name, '/') !== false
+                || strpos($name, '\\') !== false
+                || basename($name) !== $name
+            ) {
+                wp_send_json_error(__('Oops! Security check failed!', 'cuar'));
+            }
+
+            if (strpos($subdir, "\0") !== false || strpos($subdir, '\\') !== false) {
+                wp_send_json_error(__('Oops! Security check failed!', 'cuar'));
+            }
+
+            if ($subdir !== '') {
+                $tokens = explode('/', $subdir);
+                foreach ($tokens as $token) {
+                    if ($token === '' || $token === '.' || $token === '..') {
+                        wp_send_json_error(__('Oops! Security check failed!', 'cuar'));
+                    }
+                }
+            }
+
+            // Reconstruct image path safely
             $upload_locations = $this->ajax_custom_editor_images_upload_dir();
-            $file_to_delete = $upload_locations['basedir']
-                              . apply_filters('cuar/private-content/editor-images/subdir-upload-location', '/customer-area/')
-                              . $data['subdir'] . '/' . $data['name'];
+            $editor_images_root = $upload_locations['basedir']
+                . apply_filters('cuar/private-content/editor-images/subdir-upload-location', '/customer-area/');
+            $editor_images_root_real = realpath($editor_images_root);
+
+            if ($editor_images_root_real === false) {
+                wp_send_json_error(__('Oops! Security check failed!', 'cuar'));
+            }
+
+            $file_to_delete = trailingslashit($editor_images_root_real)
+                . ($subdir !== '' ? $subdir . '/' : '')
+                . $name;
+            $file_to_delete_real = realpath($file_to_delete);
 
             // Check if file exists
-            if (!file_exists($file_to_delete))
-            {
+            if ($file_to_delete_real === false) {
                 wp_send_json_error(__('It looks like the file you tried to delete does not exists.', 'cuar'));
             }
 
+            // Enforce deletion inside editor images root only
+            $editor_images_root_real_normalized = wp_normalize_path(trailingslashit($editor_images_root_real));
+            $file_to_delete_real_normalized = wp_normalize_path($file_to_delete_real);
+
+            if (strpos($file_to_delete_real_normalized, $editor_images_root_real_normalized) !== 0) {
+                wp_send_json_error(__('Oops! Security check failed!', 'cuar'));
+            }
+
             // Check file type
-            $supported_types = apply_filters('cuar/private-content/editor-images/supported-types',
+            $supported_types = apply_filters(
+                'cuar/private-content/editor-images/supported-types',
                 [
                     'image/jpeg',
                     'image/gif',
                     'image/png',
-                ]);
-            $arr_file_type = wp_check_filetype(basename($file_to_delete));
+                ]
+            );
+            $arr_file_type = wp_check_filetype(basename($file_to_delete_real));
             $uploaded_type = $arr_file_type['type'];
-            if (!in_array($uploaded_type, $supported_types, true))
-            {
+            if (!in_array($uploaded_type, $supported_types, true)) {
                 wp_send_json_error(sprintf(__('This file type is not allowed. You can only delete: %s', 'cuar'), implode(', ', $supported_types)));
             }
 
             // Delete file
-            if (!unlink($file_to_delete))
-            {
+            if (!unlink($file_to_delete_real)) {
                 wp_send_json_error(__('This file cannot be deleted, please contact site administrator.', 'cuar'));
-            }
-            else
-            {
+            } else {
                 wp_send_json_success();
             }
         }
@@ -1028,35 +1071,49 @@ if (!class_exists('CUAR_AbstractEditContentPageAddOn')) :
          */
         public function ajax_is_user_allowed_to_create_or_update_content($post_type, $post_id, $current_user_id)
         {
-            // Check create content permissions
-            if (empty($post_type) || (!empty($post_id) && $post_id < 0 && !current_user_can($post_type . '_create_content')))
-            {
+            $post_type = sanitize_key((string)$post_type);
+            $post_id = (int)$post_id;
+            $current_user_id = (int)$current_user_id;
+
+            // Check create content permissions for new content
+            if (empty($post_type)) {
                 wp_send_json_error(__('It looks like you are not allowed to create content for this kind of post type.', 'cuar'));
             }
 
-            // Check update any content permissions
-            if (empty($post_type) || (!empty($post_id) && $post_id > 0 && current_user_can($post_type . '_update_any_content') !== true))
-            {
-
-                // Make sure this is an updated content
-                if (!empty($post_id) && $post_id > 0)
-                {
-
-                    // Check update authored content permissions
-                    if ($current_user_id === (int)get_post_field('post_author', $post_id) && current_user_can($post_type . '_update_authored_content') !== true)
-                    {
-                        wp_send_json_error(__('It looks like you are not allowed to update authored content for this post.', 'cuar'));
-                    }
-
-                    // Check update owned content permissions
-                    $po_addon = $this->plugin->get_addon('post-owner');
-                    if ($po_addon->is_user_owner_of_post($post_id, $current_user_id) && current_user_can($post_type . '_update_owned_content') !== true)
-                    {
-                        wp_send_json_error(__('It looks like you are not allowed to update owned content for this post.', 'cuar'));
-                    }
+            if ($post_id <= 0) {
+                if (!current_user_can($post_type . '_create_content')) {
+                    wp_send_json_error(__('It looks like you are not allowed to create content for this kind of post type.', 'cuar'));
                 }
+
+                return;
             }
+
+            // Existing post: enforce strict update authorization
+            $post = get_post($post_id);
+            if ($post === null || $post->post_type !== $post_type) {
+                wp_send_json_error(__('Trying to cheat?', 'cuar'));
+            }
+
+            if (current_user_can($post_type . '_update_any_content')) {
+                return;
+            }
+
+            $is_author = ($current_user_id === (int)$post->post_author);
+
+            $po_addon = $this->plugin->get_addon('post-owner');
+            $is_owner = $po_addon !== null && $po_addon->is_user_owner_of_post($post_id, $current_user_id);
+
+            if ($is_author && current_user_can($post_type . '_update_authored_content')) {
+                return;
+            }
+
+            if ($is_owner && current_user_can($post_type . '_update_owned_content')) {
+                return;
+            }
+
+            wp_send_json_error(__('It looks like you are not allowed to update this post.', 'cuar'));
         }
+
 
         /**
          * Change the upload directory on the fly when uploading our private file

@@ -420,16 +420,44 @@ class CUAR_PrivateFilesDefaultHandlers
         $po_addon = $this->plugin->get_addon('post-owner');
 
         $src_folder = trailingslashit($pf_addon->get_ftp_path());
+        $src_folder_real = realpath($src_folder);
+
+        $initial_filename = (string) $initial_filename;
+        $is_invalid_filename = (
+            $initial_filename === ''
+            || strpos($initial_filename, "\0") !== false
+            || basename($initial_filename) !== $initial_filename
+            || strpos($initial_filename, '/') !== false
+            || strpos($initial_filename, '\\') !== false
+        );
+
         $src_path = $src_folder . $initial_filename;
+        $src_real = $is_invalid_filename ? false : realpath($src_path);
+
+        $src_folder_real_normalized = $src_folder_real !== false ? wp_normalize_path(trailingslashit($src_folder_real)) : '';
+        $src_real_normalized = $src_real !== false ? wp_normalize_path($src_real) : '';
+
+        if (
+            $src_folder_real === false
+            || $src_real === false
+            || strpos($src_real_normalized, $src_folder_real_normalized) !== 0
+            || !is_file($src_real)
+            || !is_readable($src_real)
+        )
+        {
+            $errors[] = sprintf(__('An error happened while copying %s from the FTP folder', 'cuar'), $filename);
+
+            return $errors;
+        }
 
         $dest_folder = trailingslashit($po_addon->get_private_storage_directory($post_id, true, true));
         $dest_path = $dest_folder . $filename;
 
-        if (@copy($src_path, $dest_path))
+        if (@copy($src_real, $dest_path))
         {
-            if ($extra == 'ftp-move')
+            if (isset($extra) && $extra === 'ftp-move')
             {
-                @unlink($src_path);
+                @unlink($src_real);
             }
         }
         else
@@ -438,6 +466,7 @@ class CUAR_PrivateFilesDefaultHandlers
         }
 
         return $errors;
+
     }
 
     /**

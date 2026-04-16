@@ -5,7 +5,7 @@ Donate link:        https://wp-customerarea.com/shop/
 Tags:               private files,client area,customer area,client portal,customer portal,user files,secure area,crm,project,project management,access control,files
 Requires at least:  5.0
 Tested up to:       6.9
-Stable tag:         8.3.3
+Stable tag:         8.3.5
 License:            GPLv2 or later
 License URI:        http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -99,6 +99,10 @@ Contributions are welcome. The plugin has a [Gitlab repository for contributors]
 feel free to fork the project and send us pull requests!
 
 == Changelog ==
+
+= 8.3.5 (2026/04/16) =
+
+* Security: fixed multiple privilege/path validation issues in file and editor-image handlers to prevent unauthorized post updates, path traversal, and arbitrary image deletion.
 
 = 8.3.4 (2026/02/05) =
 

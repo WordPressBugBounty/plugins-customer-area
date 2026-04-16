@@ -147,6 +147,18 @@ if ( !class_exists('CUAR_CapabilitiesAddOn')) :
          */
         public function validate_options($validated, $cuar_settings, $input)
         {
+
+            if (!current_user_can('manage_options')) {
+                return $validated;
+            }
+
+            $tab = isset($_POST['tab']) ? sanitize_text_field(wp_unslash($_POST['tab'])) : '';
+            if ($tab !== 'cuar_capabilities') {
+                return $validated;
+            }
+            
+            check_admin_referer( CUAR_Settings::$OPTIONS_GROUP . '_' . $tab . '-options' );
+
             global $wp_roles;
             if ( !isset($wp_roles)) $wp_roles = new WP_Roles();
             $roles = $wp_roles->role_objects;

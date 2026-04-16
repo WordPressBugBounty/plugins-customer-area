@@ -138,66 +138,67 @@ if (!class_exists('CUAR_Settings')) :
          */
         public function print_settings_page()
         {
-            if (isset($_GET['run-setup-wizard']))
-            {
-                $success = false;
+            if (!is_admin() || !current_user_can('manage_options')) {
+                wp_die(__('Sorry, you are not allowed to access this page.', 'cuar'));
+            }
 
-                if (isset($_POST['submit']))
-                {
-                    $errors = [];
-                    if (!isset($_POST["cuar_page_title"]) || empty($_POST["cuar_page_title"]))
-                    {
+            if (isset($_GET['run-setup-wizard'])) {
+
+                // CSRF protection on GET access
+                check_admin_referer('cuar_run_setup_wizard');
+
+                $success = false;
+                $errors = [];
+
+                if (isset($_POST['submit'])) {
+
+                    // CSRF protection on POST submit
+                    check_admin_referer('cuar_setup_wizard', 'cuar_setup_wizard_nonce');
+
+                    $title = isset($_POST["cuar_page_title"])
+                        ? sanitize_text_field(wp_unslash($_POST["cuar_page_title"]))
+                        : '';
+
+                    if ($title === '') {
                         $errors[] = __('The page title cannot be empty', 'cuar');
                     }
 
-                    if (empty($errors))
-                    {
-                        $post_data = [
+                    if (empty($errors)) {
+                        $page_id = wp_insert_post([
                             'post_content' => '[customer-area /]',
-                            'post_title' => $_POST["cuar_page_title"],
+                            'post_title' => $title,
                             'post_status' => 'publish',
                             'post_type' => 'page',
                             'comment_status' => 'closed',
                             'ping_status' => 'closed',
-                        ];
-                        $page_id = wp_insert_post($post_data);
-                        if (is_wp_error($page_id))
-                        {
-                            $errors[] = $page_id->get_error_message();
-                        }
-                        else
-                        {
-                            $this->plugin->get_addon('customer-pages')->set_customer_page_id($page_id);
-                        }
+                        ], true);
 
-                        if (empty($errors))
-                        {
+                        if (is_wp_error($page_id)) {
+                            $errors[] = $page_id->get_error_message();
+                        } else {
+                            $this->plugin->get_addon('customer-pages')->set_customer_page_id($page_id);
                             $success = true;
                         }
                     }
                 }
 
-                if ($_GET['run-setup-wizard'] == 1664)
-                {
-                    $success = true;
-                }
+                // REMOVE insecure magic trigger
+                // if ($_GET['run-setup-wizard'] == 1664) { $success = true; }
 
-                if ($success)
-                {
-                    include(CUAR_INCLUDES_DIR . '/setup-wizard-done.view.php');
-                }
-                else
-                {
-                    include(CUAR_INCLUDES_DIR . '/setup-wizard.view.php');
-                }
+                include(
+                    $success
+                    ? CUAR_INCLUDES_DIR . '/setup-wizard-done.view.php'
+                    : CUAR_INCLUDES_DIR . '/setup-wizard.view.php'
+                );
+
+                return;
             }
-            else
-            {
-                include($this->plugin->get_template_file_path(
-                    CUAR_INCLUDES_DIR . '/core-classes',
-                    'settings.template.php',
-                    'templates'));
-            }
+
+            include($this->plugin->get_template_file_path(
+                CUAR_INCLUDES_DIR . '/core-classes',
+                'settings.template.php',
+                'templates'
+            ));
         }
 
         /**
@@ -652,17 +653,27 @@ if (!class_exists('CUAR_Settings')) :
          */
         public function validate_role($input, &$validated, $option_id)
         {
-            $role = $input[$option_id];
-            if (isset($role) && ($role === "cuar_any" || null !== get_role($input[$option_id])))
-            {
-                $validated[$option_id] = $input[$option_id];
+            $role = $input[$option_id] ?? null;
+
+            if ($role === null || $role === '') {
+                return;
             }
-            else
-            {
-                add_settings_error($option_id, 'settings-errors',
-                    $option_id . ': ' . $input[$option_id] . __(' is not a valid role', 'cuar'), 'error');
+
+            $role = (string) $role;
+
+            if ($role === 'cuar_any' || null !== get_role($role)) {
+                $validated[$option_id] = $role;
+                return;
             }
+
+            add_settings_error(
+                $option_id,
+                'settings-errors',
+                $option_id . ': ' . esc_html($role) . __(' is not a valid role', 'cuar'),
+                'error'
+            );
         }
+
 
         /**
          * Validate a value in any case

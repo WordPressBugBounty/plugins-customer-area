@@ -169,16 +169,16 @@ if (!class_exists('CUAR_InstallerAddOn')) :
         public function create_pages_and_navigation()
         {
 
-			// Anti CSRF
-			check_ajax_referer('cuar_installer_create_pages_and_nav_nonce', 'security');
+            // Anti CSRF
+            check_ajax_referer('cuar_installer_create_pages_and_nav_nonce', 'security');
 
-			// Vérification des capacités
-			if ( ! current_user_can( 'manage_options' ) ) {
-				wp_send_json( [
-					'success' => false,
-					'message' => __( 'You do not have the required capabilities to perform this action.', 'cuar' ),
-				]);
-			}
+            // Vérification des capacités
+            if (!current_user_can('manage_options')) {
+                wp_send_json([
+                    'success' => false,
+                    'error' => __('You do not have the required capabilities to perform this action.', 'cuar'),
+                ]);
+            }
 
             // Use the Customer Pages add-on to do the job
             /** @var CUAR_CustomerPagesAddOn $cp_addon */
@@ -189,12 +189,10 @@ if (!class_exists('CUAR_InstallerAddOn')) :
             // Clear the notices added by the above functions
             $this->plugin->clear_admin_notices();
 
-            // No way to screw up currently, always success
-            $response = new StdClass();
-            $response->success = true;
-            $response->message = __('The required pages and the navigation menu have been created', 'cuar');
-
-            wp_send_json($response);
+            wp_send_json([
+                'success' => true,
+                'message' => __('The required pages and the navigation menu have been created', 'cuar'),
+            ]);
         }
 
         /**

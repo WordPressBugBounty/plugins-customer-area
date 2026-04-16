@@ -93,6 +93,8 @@
     </p>
 </div>
 
+<?php $cuar_installer_nonce = wp_create_nonce('cuar_installer_create_pages_and_nav_nonce'); ?>
+
 <!--suppress JSUnresolvedVariable -->
 <script type="text/javascript">
     jQuery(document).ready(function($) {
@@ -109,7 +111,8 @@
 
             // Ajax call to create pages and navigation menu
             var data = {
-                'action': 'cuar_installer_create_pages_and_nav'
+                'action': 'cuar_installer_create_pages_and_nav',
+                'security': '<?php echo esc_js($cuar_installer_nonce); ?>',
             };
             $.post(ajaxurl, data, function(response) {
                 loadingIndicator.fadeOut();
@@ -138,7 +141,8 @@
         // Button to configure permissions
         $('.cuar-configure-permissions').click(function() {
             var data = {
-                'action': 'cuar_mark_permissions_as_configured'
+                'action': 'cuar_mark_permissions_as_configured',
+                'security': '<?php echo esc_js($cuar_installer_nonce); ?>',
             };
             $.post(ajaxurl, data, function (response) {
             });
