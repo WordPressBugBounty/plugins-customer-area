@@ -3,11 +3,13 @@
 	Plugin Name: 	WP Customer Area
 	Description: 	WP Customer Area is a modular all-in-one solution to manage private content with WordPress.
 	Plugin URI: 	https://wp-customerarea.com
-	Version: 		8.3.5
+	Version: 		8.3.6
 	Author: 		Aguila Technologies
 	Author URI: 	https://www.aguila.fr/
 	Text Domain: 	cuar
 	Domain Path: 	/languages
+	License: 		GPLv2 or later
+	License URI: 	http://www.gnu.org/licenses/gpl-2.0.html
 */
 
 /*  Copyright 2013 Foobar Studio (contact@foobar.studio)
@@ -38,7 +40,7 @@ if ( !defined('CUAR_INCLUDES_DIR')) define('CUAR_INCLUDES_DIR', CUAR_PLUGIN_DIR 
 
 define('CUAR_LANGUAGE_DIR', basename(CUAR_PLUGIN_DIR) . '/languages');
 
-define('CUAR_PLUGIN_VERSION', '8.3.5');
+define('CUAR_PLUGIN_VERSION', '8.3.6');
 define('CUAR_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('CUAR_SCRIPTS_URL', CUAR_PLUGIN_URL . 'scripts');
 define('CUAR_ADMIN_SKIN', 'plugin%%default-wp38');

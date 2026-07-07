@@ -88,7 +88,7 @@ class CUAR_ProtectedContentShortcode extends CUAR_Shortcode
         if (empty($type) || !(in_array($type, $content_types) || in_array($type, $container_types)))
         {
             return sprintf(__('The parameter %2$s of shortcode <code>[%1$s]</code> has an invalid value: <code>%3$s</code>', 'cuar'),
-                $this->name, 'type', $type);
+                esc_html($this->name), 'type', esc_html($type));
         }
 
         // Build the query
@@ -122,7 +122,7 @@ class CUAR_ProtectedContentShortcode extends CUAR_Shortcode
 
             default:
                 return sprintf(__('The parameter %2$s of shortcode <code>[%1$s]</code> has an invalid value: <code>%3$s</code>', 'cuar'),
-                    $this->name, 'show', $params['mode']);
+                    esc_html($this->name), 'show', esc_html($params['mode']));
         }
 
         // Taxonomy
