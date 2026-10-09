@@ -158,7 +158,7 @@ if (!class_exists('CUAR_AddOn')) :
                 {
                     wp_die(
                         "The WP Customer Area add-on « {$this->get_addon_name()} » is outdated and not compatible with WP Customer Area 8 or greater. "
-                        . 'You must either downgrade to <a href="' . cuar_site_url('/uploads/customer-area.7.10.6.zip', true) . '">WP Customer Area 7.10.6</a> or update your addons to the latest version.'
+                        . 'You must either downgrade to WP Customer Area 7.10.6 (available on request from the support team) or update your addons to the latest version.'
                         . '<br>'
                         . '<br>'
                         . 'If you plan to update, in order to be able to download the latest addons, please contact the WP Customer Area '

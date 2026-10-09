@@ -1,11 +1,11 @@
 === WP Customer Area ===
 
-Contributors: 		  aguilatechnologies, foobarstudio, vprat, tlartaud
-Donate link:        https://wp-customerarea.com/shop/
+Contributors: 		  aguilatechnologies
+Donate link:        https://wp-customerarea.com/addons/
 Tags:               private files,client area,customer area,client portal,customer portal,user files,secure area,crm,project,project management,access control,files
 Requires at least:  5.0
 Tested up to:       7.0
-Stable tag:         8.3.6
+Stable tag:         8.3.7
 License:            GPLv2 or later
 License URI:        http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -16,9 +16,7 @@ WP Customer Area is a modular all-in-one solution to manage private content with
 WP Customer Area is a modular all-in-one solution to manage private content with WordPress. Sharing files/pages with
 one or multiple users is one of the main feature provided by our easy-to-use plugin. Give it a try!
 
-* [Add-ons](https://wp-customerarea.com/shop/)
-* [Git repository for contributors](https://gitlab.com/wp-customerarea/plugins/customer-area)
-* [Issue tracker](https://gitlab.com/wp-customerarea/plugins/customer-area/-/issues)
+* [Add-ons](https://wp-customerarea.com/addons/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=customer-area)
 
 **Current features**
 
@@ -33,25 +31,31 @@ Invoicing, Conversations, Advanced ownership, Projects, and much more!
 
 WP Customer Area is available for free and should cover the needs of most users. If you want to encourage us to actively
 maintain it, or if you need a particular feature not included in the basic plugin, you can buy our premium extensions
-from [our online shop](https://wp-customerarea.com/shop/)
+from [our online shop](https://wp-customerarea.com/addons/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=customer-area)
+
+**Security**
+
+Found a security issue? Please report it privately to security@wp-customerarea.com or through the Wordfence
+vulnerability disclosure program, not in the support forums. Our response commitments and the list of fixed
+vulnerabilities are on [our security page](https://wp-customerarea.com/security/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=customer-area).
 
 **Special thanks**
 
 To [Steve Steiner](www.websaucesoftware.com) for his intensive testing on the plugin, his bug reports and support.
 
-To the translators who send us [their translations](https://wp-customerarea.com/documentation/):
+To the translators who send us [their translations](https://wp-customerarea.com/documentation/introduction/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=customer-area):
 
 * Catalan by Amanda Fontana
 * Dutch by [Paul Willems](http://wi4.nl) and [Peter Massar](http://profiles.wordpress.org/yourdigihands/)
-* English by [Foobar Studio](https://foobar.studio)
-* French by [Foobar Studio](https://foobar.studio)
+* English by Foobar Studio
+* French by Foobar Studio
 * German by [Benjamin Oechsler](http://benlocal.de)
-* Hungarian by [Jagri István](http://www.itcs.hu)
+* Hungarian by Jagri István
 * Spanish by Ulises and [e-rgonomy](http://e-rgonomy.com)
 * Brazilian Portuguese by [Ricardo Silva](http://walbatroz.com) and [Marcos Meyer Hollerweger](http://marcosh.eng.br/)
-* Italian by [Andrea Starz](http://www.work-on-web.it) and [Antonio Cicirelli](http://www.ideacommerce.it)
+* Italian by Andrea Starz and [Antonio Cicirelli](http://www.ideacommerce.it)
 * Swedish by Patric Liljestrand
-* Turkish by [Mehmet Hakan](http://wpsitesi.com)
+* Turkish by Mehmet Hakan
 
 If you translate the plugin to your language, feel free to send us the translation files, we will include them and give
 you the credit for it on this page.
@@ -59,11 +63,11 @@ you the credit for it on this page.
 == Upgrade Notice ==
 
 We have a safe upgrade procedure that needs to be followed, specially if you have installed any add-ons to the main
-plugin: [Important upgrade procedure for WP Customer Area](https://wp-customerarea.com/documentation/update-procedure/)
+plugin: [Important upgrade procedure for WP Customer Area](https://wp-customerarea.com/documentation/introduction/update-procedure/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=customer-area)
 
 == Installation ==
 
-See our [Getting started documentation](https://wp-customerarea.com/documentation/getting-started/).
+See our [Getting started documentation](https://wp-customerarea.com/documentation/getting-started/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=customer-area).
 
 == Screenshots ==
 
@@ -93,12 +97,12 @@ You have all the information on the [plugin website](https://wp-customerarea.com
 
 Open a new topic on the plugin's support forum, I will consider every feature request and all ideas are welcome.
 
-= I implemented something, could you integrate it in the plugin? =
-
-Contributions are welcome. The plugin has a [Gitlab repository for contributors](https://gitlab.com/wp-customerarea/plugins/customer-area/)
-feel free to fork the project and send us pull requests!
-
 == Changelog ==
+
+= 8.3.7 (2026/10/09) =
+
+* Security: fixed a missing capability and nonce check on an AJAX action of the setup wizard (CVE-2025-49982).
+* Fix: links to the WP Customer Area website (account, add-ons, documentation) now point to their current location.
 
 = 8.3.6 (2026/07/06) =
 
@@ -1258,7 +1262,7 @@ feel free to fork the project and send us pull requests!
 This has allowed greater possibilities for customization (Widget areas, more templates to override, ...)
 * The customer area main navigation menu now is a WordPress menu that can be customized just like any other WordPress menu (from the admin page: "Appearance" > "Menus")
 * Restructured the options page. It now has less tabs and should group options in a more logical way. If you have commercial add-ons, you may need to enter their
-license key again. These are available by logging-in with your credentials at https://foobar.studio/shop/your-account/
+license key again. These are available by logging-in with your credentials at https://wp-customerarea.com/account/
 * Added category column in the admin page for private files and private pages (A pending feature request from several users)
 * Refactored a lot of code to make the plugin ligher and more efficient. Should also reduce the amount of duplicated code and thus the potential hidden bugs.
 * Add possibility to include a function file in your Customer Area theme (See included frontend theme: default-v4). Works like WordPress' functions.php file for themes

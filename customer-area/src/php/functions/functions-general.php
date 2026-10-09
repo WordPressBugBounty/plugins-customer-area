@@ -215,10 +215,14 @@ function cuar_wp_editor_settings($extra_settings = array())
 }
 
 /**
- * Generate EN or FR URL to WPCA's main site
+ * Generate a URL to WPCA's main site
+ *
+ * The site is English only: legacy paths still used by the plugin and its add-ons are mapped to their current
+ * location (no redirect hop). Links shown in the admin get UTM parameters so that visits from the plugin can be
+ * measured.
  *
  * @param string $path   Part of the URL to merge
- * @param bool   $bypass Should bypass translation to FR
+ * @param bool   $bypass Return the raw URL (no path mapping, no UTM parameters)
  *
  * @return string
  */
@@ -226,47 +230,41 @@ function cuar_site_url($path = null, $bypass = false)
 {
 	$site = 'https://wp-customerarea.com';
 
+	// Site root: also used as the licensing API base URL, keep it untouched
 	if (empty($path) || $path === '/') return esc_url($site . $path);
 
+	$path = rtrim($path, '/');
+	$path = substr($path, 0, 1) !== "/" ? '/' . $path : $path;
+
+	if ($bypass) return esc_url($site . $path);
+
 	$paths = [
-		'/feed' => '/fr/feed',
-		'/my-account' => '/fr/mon-compte',
-		'/my-account/api-keys' => '/fr/mon-compte/api-keys',
-		'/support' => '/support',
-		'/shop' => '/fr/boutique',
-		'/products' => '/fr/produits',
-		'/documentation/introduction' => '/fr/documentation/introduction',
-		'/documentation/getting-started' => '/fr/documentation/guide-de-demarrage/',
-		'/documentation/add-on-guides/bulk-import' => '/fr/documentation/guides-des-extensions/import-en-masse',
-		'/documentation/user-guides/permissions' => '/fr/documentation/guides-utilisateur/permissions/',
-		'/documentation/user-guides/shortcodes' => '/fr/documentation/guides-utilisateur/les-codes-courts/',
-		'/documentation/developer-guides/the-skin-system' => '/fr/documentation/developer-guides/le-systeme-de-sous-themes/',
-		'/product/wpca-invoicing' => '/fr/produit/facturation-wpca',
-		'/product/wpca-enhanced-files' => '/fr/produit/ameliorations-fichiers-wpca',
-		'/product/wpca-smart-groups' => '/fr/produit/groupes-intelligents-wpca/',
-		'/product/wpca-protect-post-types' => '/fr/produit/protection-de-contenus-tierce-wpca/',
-		'/product/wpca-compatibility-divi' => '/fr/produit/compatibilite-divi-wpca',
-		'/product/wpca-compatibility-elementor' => '/fr/produit/compatibilite-elementor-wpca',
-		'/product/wpca-bulk-import' => '/fr/produit/import-en-masse-wpca',
-		'/product/wpca-ftp-mass-import' => '/fr/produit/import-ftp-en-masse-wpca',
-		'/product/wpca-content-expiry' => '/fr/produit/dates-expiration-wpca',
-		'/product/wpca-front-office-publishing' => '/fr/produit/publication-front-office-wpca',
-		'/whats-new-in-wp-customer-area-8-1' => '/fr/quoi-de-neuf-dans-wp-customer-area-8-1',
-		'/whats-new-in-wp-customer-area-8-0' => '/fr/quoi-de-neuf-dans-wp-customer-area-8-0',
-		'/whats-new-in-wp-customer-area-7-7-0' => '/fr/quoi-de-neuf-dans-wp-customer-area-7-7-0',
-		'/whats-new-in-wp-customer-area-7-5-0' => '/fr/quoi-de-neuf-dans-wp-customer-area-7-5-0',
-		'/whats-new-in-wp-customer-area-7-4' => '/fr/quoi-de-neuf-dans-wp-customer-area-7-4',
-		'/whats-new-in-wp-customer-area-8-2' => '/fr/quoi-de-neuf-dans-wp-customer-area-8-2',
+		'/my-account'                                 => '/account',
+		'/my-account/api-keys'                        => '/account/api-keys',
+		'/shop'                                       => '/addons',
+		'/products'                                   => '/addons',
+		'/product/wpca-compatibility-divi'            => '/addons/wpca-divi-compatibility',
+		'/product/wpca-compatibility-elementor'       => '/addons/wpca-elementor-compatibility',
+		'/whats-new-in-wp-customer-area-7-5-0'        => '/whats-new-in-wp-customer-area-7-5',
+		'/whats-new-in-wp-customer-area-7-4'          => '/whats-new-in-wp-customer-area-7-4-pay-invoices-online',
 	];
 
-	$determined_locale = function_exists( 'get_user_locale' ) && is_admin() ? get_user_locale() : get_locale();
-
-	$path = rtrim($path, '/');
-    $path = substr($path, 0, 1) !== "/" ? '/' . $path : $path;
-
-	if (!$bypass && 'fr_' === substr( $determined_locale, 0, 3 )) {
-		$path = isset($paths[$path]) && is_string($paths[$path]) ? $paths[$path] : $path;
+	if (isset($paths[$path])) {
+		$path = $paths[$path];
+	} elseif (strpos($path, '/product/') === 0) {
+		$path = '/addons/' . substr($path, strlen('/product/'));
 	}
 
-	return esc_url($site . $path);
+	$url = $site . $path . '/';
+
+	// The feed is fetched by the server, not visited
+	if ($path !== '/feed') {
+		$url = add_query_arg([
+			'utm_source'   => 'wp-admin',
+			'utm_medium'   => 'plugin',
+			'utm_campaign' => 'customer-area',
+		], $url);
+	}
+
+	return esc_url($url);
 }

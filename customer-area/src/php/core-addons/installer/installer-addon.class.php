@@ -200,6 +200,17 @@ if (!class_exists('CUAR_InstallerAddOn')) :
          */
         public function mark_permissions_as_configured()
         {
+			// Anti CSRF (the setup wizard sends the same nonce as for page creation)
+			check_ajax_referer('cuar_installer_create_pages_and_nav_nonce', 'security');
+
+			// Capability check (CVE-2025-49982)
+			if ( ! current_user_can( 'manage_options' ) ) {
+				wp_send_json( [
+					'success' => false,
+					'message' => __( 'You do not have the required capabilities to perform this action.', 'cuar' ),
+				]);
+			}
+
             /** @var CUAR_CapabilitiesAddOn $cm_addon */
             $cm_addon = $this->plugin->get_addon('capabilities-manager');
             $cm_addon->ignore_unconfigured_capabilities_flag();
