@@ -30,6 +30,13 @@ if (!class_exists('CUAR_AddOn')) :
         private static $MISSING_LICENSE_MESSAGES_SHOWN = [];
         private static $HAS_NOTIFIED_INVALID_LICENSES = false;
 
+        /** @var CUAR_AddOn[] Add-ons whose license key is no longer granted by the shop */
+        private static $EXPIRED_LICENSE_ADDONS = [];
+
+        /** How long "Not now" hides the expired-license notice, per administrator */
+        const EXPIRED_NOTICE_SNOOZE = 15 * DAY_IN_SECONDS;
+        const EXPIRED_NOTICE_SNOOZE_META = 'cuar_expired_license_notice_until';
+
         private static $OPTION_LICENSE_KEY = 'cuar_license_key_';
         private static $OPTION_LICENSE_CHECK = 'cuar_license_check_';
         private static $OPTION_LICENSE_STATUS = 'cuar_license_status_';
@@ -190,6 +197,7 @@ if (!class_exists('CUAR_AddOn')) :
             );
 
             add_action('admin_init', [$this, 'show_invalid_license_admin_notice'], 10);
+            add_action('admin_init', [__CLASS__, 'handle_expired_license_actions'], 5);
             add_action('admin_init', [$this, 'show_invalid_openssl_version_notice'], 10);
             add_filter('plugin_row_meta', [$this, 'plugin_row_links'], 10, 4);
 
@@ -274,8 +282,14 @@ if (!class_exists('CUAR_AddOn')) :
 					cuar_site_url('/support')
                 );
 
-                $status = $this->licensing_client->get_api_key_status();
-                if ($status !== true)
+                if ($this->licensing_client->is_expired())
+                {
+                    $links_array[] = sprintf(
+                        __('<a href="%s" target="_blank" rel="noopener">Renew license</a>', 'cuar'),
+                        esc_url($this->licensing_client->get_renew_url())
+                    );
+                }
+                else if ($this->licensing_client->get_api_key_status() !== true)
                 {
                     $links_array[] = sprintf(
                         __('<a href="%s">Activate license</a>', 'cuar'),
@@ -296,6 +310,17 @@ if (!class_exists('CUAR_AddOn')) :
             {
                 if ($this->licensing_client === null)
                 {
+                    return;
+                }
+
+                if ($this->licensing_client->is_expired())
+                {
+                    echo '<tr class="plugin-update-tr active" data-plugin="' . esc_attr($plugin_file_name) . '">';
+                    echo '<td colspan="4" class="plugin-update colspanchange">';
+                    echo '<div class="notice inline notice-warning notice-alt"><p>';
+                    echo wp_kses_post(self::get_expired_license_text([$this], false));
+                    echo '</p></div></td></tr>';
+
                     return;
                 }
 
@@ -384,12 +409,6 @@ if (!class_exists('CUAR_AddOn')) :
          */
         public function show_invalid_license_admin_notice()
         {
-            // Do not show notification twice
-            if (self::$HAS_NOTIFIED_INVALID_LICENSES)
-            {
-                return;
-            }
-
             // Bail if doing ajax
             if (defined('DOING_AJAX') && DOING_AJAX)
             {
@@ -427,11 +446,17 @@ if (!class_exists('CUAR_AddOn')) :
                 return;
             }
 
-            $status = $this->licensing_client->get_api_key_status();
-            if ($status !== true)
+            // A key that was never entered has its own notice (licensing client). Here: keys
+            // the shop no longer grants, collected into one notice for all add-ons.
+            if (!$this->licensing_client->is_expired())
             {
-                add_action('admin_notices', [&$this, 'print_invalid_license_admin_notice'], 10);
-                self::$HAS_NOTIFIED_INVALID_LICENSES = true;
+                return;
+            }
+
+            self::$EXPIRED_LICENSE_ADDONS[$this->addon_id] = $this;
+            if (!has_action('admin_notices', [__CLASS__, 'print_expired_licenses_notice']))
+            {
+                add_action('admin_notices', [__CLASS__, 'print_expired_licenses_notice'], 10);
             }
         }
 
@@ -442,14 +467,134 @@ if (!class_exists('CUAR_AddOn')) :
          *
          * @return void
          */
-        public function print_invalid_license_admin_notice()
+        public static function print_expired_licenses_notice()
         {
-            echo '<div class="error"><p>';
+            if (empty(self::$EXPIRED_LICENSE_ADDONS) || !current_user_can('manage_options'))
+            {
+                return;
+            }
+
+            // Only where it is useful: dashboard, plugins, and WP Customer Area screens
+            $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+            $screen_id = $screen ? (string) $screen->id : '';
+            $post_type = $screen ? (string) $screen->post_type : '';
+            $is_target = in_array($screen_id, ['dashboard', 'plugins'], true)
+                || strpos($screen_id, 'wpca') !== false
+                || strpos($post_type, 'cuar_') === 0;
+            if (!$is_target)
+            {
+                return;
+            }
+
+            if ((int) get_user_meta(get_current_user_id(), self::EXPIRED_NOTICE_SNOOZE_META, true) > time())
+            {
+                return;
+            }
+
+            $base_url = remove_query_arg(['cuar_license_notice', '_wpnonce']);
+            $snooze_url = wp_nonce_url(add_query_arg('cuar_license_notice', 'snooze', $base_url), 'cuar_license_notice');
+            $recheck_url = wp_nonce_url(add_query_arg('cuar_license_notice', 'recheck', $base_url), 'cuar_license_notice');
+
+            echo '<div class="notice notice-warning"><p>';
+            echo wp_kses_post(self::get_expired_license_text(array_values(self::$EXPIRED_LICENSE_ADDONS), true));
+            echo '</p><p>';
             echo sprintf(
-                __('You have invalid or expired license keys for WP Customer Area. Please go to the <a href="%s">Licenses page</a> to correct this issue.', 'cuar'),
-                admin_url('options-general.php?page=wpca-settings&tab=cuar_licenses')
+                '<a href="%s">%s</a> · <a href="%s">%s</a>',
+                esc_url($snooze_url),
+                esc_html__('Not now', 'cuar'),
+                esc_url($recheck_url),
+                esc_html__('Already renewed? Check again', 'cuar')
             );
             echo '</p></div>';
+        }
+
+        /**
+         * The expired-license message for one or several add-ons. Says what an active license
+         * gives, never promises updates that do not exist: a newer version is mentioned only
+         * when the shop actually announces one.
+         *
+         * @param CUAR_AddOn[] $addons
+         */
+        private static function get_expired_license_text($addons, $with_title)
+        {
+            $names = [];
+            $renew_links = [];
+            $versions = [];
+            foreach ($addons as $addon)
+            {
+                $client = $addon->get_licensing_client();
+                $name = $client->get_software_title();
+                $names[] = $name;
+                $renew_links[] = sprintf(
+                    '<a href="%s" target="_blank" rel="noopener" class="button button-primary">%s</a>',
+                    esc_url($client->get_renew_url()),
+                    count($addons) > 1
+                        /* translators: %s: add-on name */
+                        ? sprintf(esc_html__('Renew %s', 'cuar'), esc_html($name))
+                        : esc_html__('Renew my license', 'cuar')
+                );
+                $available = $client->get_available_version();
+                if ($available !== '')
+                {
+                    $versions[] = sprintf(
+                        /* translators: 1: add-on name, 2: available version, 3: installed version */
+                        esc_html__('%1$s %2$s is available (you have %3$s).', 'cuar'),
+                        esc_html($name),
+                        esc_html($available),
+                        esc_html($client->get_software_version())
+                    );
+                }
+            }
+
+            if (count($addons) > 1)
+            {
+                /* translators: %s: comma-separated add-on names */
+                $title = sprintf(esc_html__('WP Customer Area: these add-on licenses are no longer active: %s.', 'cuar'), esc_html(implode(', ', $names)));
+                $body = esc_html__('The add-ons keep working on this site. Without an active license they won\'t receive compatibility and security fixes for future WordPress and PHP versions, and support is reserved for active licenses.', 'cuar');
+            }
+            else
+            {
+                /* translators: %s: add-on name */
+                $title = sprintf(esc_html__('WP Customer Area – %s: your license is no longer active.', 'cuar'), esc_html($names[0]));
+                $body = esc_html__('The add-on keeps working on this site. Without an active license it won\'t receive compatibility and security fixes for future WordPress and PHP versions, and support is reserved for active licenses.', 'cuar');
+            }
+
+            return ($with_title ? '<strong>' . $title . '</strong> ' : '')
+                . $body
+                . ($versions ? ' ' . implode(' ', $versions) : '')
+                . '</p><p>' . implode(' ', $renew_links);
+        }
+
+        /**
+         * "Not now" (hide for 15 days) and "Already renewed? Check again" links of the notice.
+         */
+        public static function handle_expired_license_actions()
+        {
+            $action = isset($_GET['cuar_license_notice']) ? sanitize_key($_GET['cuar_license_notice']) : '';
+            if ($action === '' || !current_user_can('manage_options'))
+            {
+                return;
+            }
+
+            check_admin_referer('cuar_license_notice');
+
+            if ($action === 'snooze')
+            {
+                update_user_meta(get_current_user_id(), self::EXPIRED_NOTICE_SNOOZE_META, time() + self::EXPIRED_NOTICE_SNOOZE);
+            }
+            else if ($action === 'recheck')
+            {
+                foreach (cuar()->get_registered_addons() as $addon)
+                {
+                    if ($addon instanceof CUAR_AddOn && $addon->is_licensing_enabled && $addon->get_licensing_client()->is_expired())
+                    {
+                        $addon->get_licensing_client()->check_license();
+                    }
+                }
+            }
+
+            wp_safe_redirect(remove_query_arg(['cuar_license_notice', '_wpnonce']));
+            exit;
         }
 
         /**

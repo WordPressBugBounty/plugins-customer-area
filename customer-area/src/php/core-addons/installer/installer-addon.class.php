@@ -156,8 +156,33 @@ if (!class_exists('CUAR_InstallerAddOn')) :
             } else if (CUAR_DEBUG_UPGRADE_PROCEDURE_FROM_VERSION !== FALSE) {
                 do_action('cuar/core/on-plugin-update', CUAR_DEBUG_UPGRADE_PROCEDURE_FROM_VERSION, $current_version);
             } else if ($active_version != $current_version) {
+                $this->remove_invalid_update_callbacks();
                 do_action('cuar/core/on-plugin-update', $active_version, $current_version);
                 $this->set_pending_redirect('wpca&tab=whats-new');
+            }
+        }
+
+        /**
+         * An outdated add-on can register an update callback whose method no longer exists, which
+         * would end the update with a fatal error. Drop such callbacks before running the update.
+         */
+        private function remove_invalid_update_callbacks()
+        {
+            global $wp_filter;
+            if (empty($wp_filter['cuar/core/on-plugin-update']))
+            {
+                return;
+            }
+
+            foreach ($wp_filter['cuar/core/on-plugin-update']->callbacks as $priority => $callbacks)
+            {
+                foreach ($callbacks as $callback)
+                {
+                    if (!is_callable($callback['function']))
+                    {
+                        remove_action('cuar/core/on-plugin-update', $callback['function'], $priority);
+                    }
+                }
             }
         }
 

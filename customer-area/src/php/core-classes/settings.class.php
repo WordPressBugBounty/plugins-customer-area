@@ -1127,6 +1127,16 @@ if (!class_exists('CUAR_Settings')) :
                 $status_message = '';
             }
 
+            // A key the shop no longer grants: say it plainly instead of the raw API error
+            if (!empty($api_key) && $licensing_client->is_expired())
+            {
+                $status_class = 'cuar-ajax-failure';
+                $status_message = sprintf(
+                    __('This license is no longer active. The add-on keeps working, but without compatibility and security fixes or support. <a href="%s" target="_blank" rel="noopener">Renew my license</a>', 'cuar'),
+                    esc_url($licensing_client->get_renew_url())
+                );
+            }
+
             if (isset($before))
             {
                 echo $before;

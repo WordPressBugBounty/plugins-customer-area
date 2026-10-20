@@ -4,8 +4,9 @@ Contributors: 		  aguilatechnologies
 Donate link:        https://wp-customerarea.com/addons/
 Tags:               private files,client area,customer area,client portal,customer portal,user files,secure area,crm,project,project management,access control,files
 Requires at least:  5.0
-Tested up to:       7.0
-Stable tag:         8.3.7
+Requires PHP:       7.2
+Tested up to:       7.1
+Stable tag:         8.4.0
 License:            GPLv2 or later
 License URI:        http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,8 +36,8 @@ from [our online shop](https://wp-customerarea.com/addons/?utm_source=wordpress.
 
 **Security**
 
-Found a security issue? Please report it privately to security@wp-customerarea.com or through the Wordfence
-vulnerability disclosure program, not in the support forums. Our response commitments and the list of fixed
+Found a security issue? Please report it privately through the [Patchstack Vulnerability Disclosure Program](https://patchstack.com/database/vdp/979d2052-ed2a-459d-80c9-59701703a576),
+the Wordfence vulnerability disclosure program or security@wp-customerarea.com, not in the support forums. Our response commitments and the list of fixed
 vulnerabilities are on [our security page](https://wp-customerarea.com/security/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=customer-area).
 
 **Special thanks**
@@ -89,6 +90,10 @@ See our [Getting started documentation](https://wp-customerarea.com/documentatio
 
 == Frequently Asked Questions ==
 
+= Where do I report security bugs found in this plugin? =
+
+Please report security bugs found in the source code of the WP Customer Area plugin through the [Patchstack Vulnerability Disclosure Program](https://patchstack.com/database/vdp/979d2052-ed2a-459d-80c9-59701703a576). The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
+
 = Getting help / documentation / support / demo / ... =
 
 You have all the information on the [plugin website](https://wp-customerarea.com)
@@ -98,6 +103,19 @@ You have all the information on the [plugin website](https://wp-customerarea.com
 Open a new topic on the plugin's support forum, I will consider every feature request and all ideas are welcome.
 
 == Changelog ==
+
+= 8.4.0 (2026/10/20) =
+
+* New: when an add-on license is no longer active, a clear notice explains what it stops (compatibility and security fixes, support) and links straight to the renewal. It appears on the dashboard, the Plugins page and the WP Customer Area screens only, and can be hidden for 15 days.
+* New: optional newsletter subscription on the About page and in the setup wizard. It opens our double opt-in form; the plugin itself sends no data.
+* Improvement: the license status is refreshed with each WordPress update check, so a renewed license is recognized quickly. An "Already renewed? Check again" link is also available.
+* Security: updated the bundled PDF libraries (html2pdf 5.3.3, TCPDF 6.11.4) to fix known vulnerabilities.
+* Fix: compatibility with PHP 8.4. Tested with WordPress 7.1.
+* Fix: no more fatal error on the first page load after an update when an outdated add-on (such as Content Expiry 2.1.3) is installed.
+* Fix: licensing traces are written to the PHP error log only when WP_DEBUG is enabled.
+* Removed: the Twitter widget of the About page (third-party script) and an unused bundled licensing library.
+* Requirement: PHP 7.2 or higher.
+* Thanks to Nguyen Tran Tuan Dung (Patchstack) for responsibly reporting CVE-2025-49982, fixed in 8.3.7.
 
 = 8.3.7 (2026/10/09) =
 

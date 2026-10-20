@@ -52,7 +52,7 @@ class CUAR_LicensingClient
 
             // Check for software updates
             $this->setup_update_check_hooks();
-            if ($this->get_option('status') !== 'Activated' && current_user_can('manage_options'))
+            if ($this->get_option('status') !== 'Activated' && empty($this->get_option('api_key')) && current_user_can('manage_options'))
             {
                 $this->add_admin_inactive_notice();
             }
@@ -63,9 +63,74 @@ class CUAR_LicensingClient
         }
     }
 
+    /**
+     * Base URL of the shop that serves licenses and updates. Filterable to test against staging.
+     */
+    public static function get_shop_url()
+    {
+        return untrailingslashit(apply_filters('cuar/licensing/shop-url', 'https://wp-customerarea.com'));
+    }
+
     protected function get_api_url()
     {
-        return cuar_site_url('/');
+        return self::get_shop_url() . '/';
+    }
+
+    /**
+     * A key was entered but the shop no longer grants it: the subscription ended or is unpaid.
+     */
+    public function is_expired()
+    {
+        return !empty($this->get_option('api_key')) && $this->get_option('status') !== 'Activated';
+    }
+
+    /**
+     * Shop page that finds the customer's subscription for this add-on and sends them to the
+     * right place (payment, resubscribe, license keys). Carries the product id only, no key.
+     */
+    public function get_renew_url()
+    {
+        return add_query_arg([
+            'product'      => (int) $this->get_option('product_id'),
+            'utm_source'   => 'wp-admin',
+            'utm_medium'   => 'plugin',
+            'utm_campaign' => 'license-expired',
+        ], self::get_shop_url() . '/renew/');
+    }
+
+    public function get_software_title()
+    {
+        return $this->software_title;
+    }
+
+    public function get_software_version()
+    {
+        return $this->software_version;
+    }
+
+    /**
+     * Newer version announced by the shop, or '' if none. Never invented: it comes from the
+     * update check, which the shop still answers (without download link) for expired licenses.
+     */
+    public function get_available_version()
+    {
+        $updates = get_site_transient('update_plugins');
+        $new_version = isset($updates->response[$this->plugin_name]->new_version)
+            ? (string) $updates->response[$this->plugin_name]->new_version
+            : '';
+
+        return $new_version !== '' && version_compare($new_version, $this->software_version, '>') ? $new_version : '';
+    }
+
+    /**
+     * Licensing traces go to the PHP error log only when debugging.
+     */
+    protected function log($message)
+    {
+        if (defined('WP_DEBUG') && WP_DEBUG)
+        {
+            error_log('[WPCA LIC] ' . $message);
+        }
     }
 
     //region Settings accessors
@@ -243,7 +308,7 @@ class CUAR_LicensingClient
         $action = $args['wc_am_action'] ?? '??';
         $productId = $args['product_id'] ?? '';
         $object = $args['object'] ?? '';
-        error_log('[WPCA LIC] Request: ' . $action . ' product_id=' . $productId . ' object=' . $object . ' url=' . $url);
+        $this->log('Request: ' . $action . ' product_id=' . $productId . ' object=' . $object . ' url=' . $url);
 
         $request = wp_safe_remote_post($url, [
             'timeout' => 30,
@@ -257,7 +322,7 @@ class CUAR_LicensingClient
 
         if (is_wp_error($request)) {
             $this->last_error = 'WP_Error: ' . $request->get_error_message();
-            error_log('[WPCA LIC] ' . $this->last_error);
+            $this->log($this->last_error);
             return false;
         }
 
@@ -268,19 +333,19 @@ class CUAR_LicensingClient
 
         if ($code !== 200) {
             $this->last_error = 'HTTP ' . $code . ' body=' . substr($body, 0, 400);
-            error_log('[WPCA LIC] ' . $this->last_error);
+            $this->log($this->last_error);
             return false;
         }
 
         if ($body === '') {
             $this->last_error = 'Empty body';
-            error_log('[WPCA LIC] ' . $this->last_error);
+            $this->log($this->last_error);
             return false;
         }
 
         if (stripos($body, '<html') !== false) {
             $this->last_error = 'HTML instead of JSON: ' . substr($body, 0, 400);
-            error_log('[WPCA LIC] ' . $this->last_error);
+            $this->log($this->last_error);
             return false;
         }
 
@@ -299,7 +364,7 @@ class CUAR_LicensingClient
         if (!is_object($response)) {
             $jsonError = json_last_error_msg();
             $msg = 'JSON decode failed: ' . $jsonError . ' | raw=' . substr((string)$raw, 0, 400);
-            error_log('[WPCA LIC] ' . $msg);
+            $this->log($msg);
             
             // Stocker l'erreur pour diagnostic
             $this->last_error = $msg;
@@ -310,7 +375,7 @@ class CUAR_LicensingClient
         // Log du succès avec le code de réponse si présent
         if (!empty($response->code)) {
             $successFlag = $response->success ?? 'null';
-            error_log('[WPCA LIC] Response code: ' . $response->code . ' success=' . var_export($successFlag, true));
+            $this->log('Response code: ' . $response->code . ' success=' . var_export($successFlag, true));
         }
 
         return $response;
@@ -343,10 +408,18 @@ class CUAR_LicensingClient
         $raw = $this->send_query($args);
         $response = $this->decode_json_or_error($raw, 'Update check failed');
 
-        // Displays an admin error message in the WordPress dashboard
-        if (!$this->is_success($response) && !empty($response->error))
+        // Keep the license status in sync between weekly checks: the expired-license notice
+        // appears when the shop stops granting the key, and goes away once it is renewed.
+        // Once the activation is gone, the shop still answers with success and the version
+        // number, but without download link: only a link proves the license is granted.
+        if ($this->is_success($response) && !empty($response->data->package->package))
         {
-            $this->plugin->add_admin_notice($response->error);
+            $this->update_option('status', 'Activated');
+        }
+        else if (!empty($response->code) && (string) $response->code === '100')
+        {
+            $this->update_option('status', 'Deactivated');
+            $this->log('Update check refused: ' . ($response->error ?? 'code 100'));
         }
 
         if ($this->is_success($response) && !empty($response->data->package))
@@ -474,7 +547,7 @@ class CUAR_LicensingClient
             && !empty($response->error) 
             && strpos($response->error, 'already been activated with the same unique instance ID') !== false)
         {
-            error_log('[WPCA LIC] License already activated on this site (same instance ID) - treating as success');
+            $this->log('License already activated on this site (same instance ID) - treating as success');
             
             // Convertir l'erreur en succès
             $response->success = true;
@@ -490,7 +563,7 @@ class CUAR_LicensingClient
         if (!empty($response->code) && $response->code === "100"
             && !empty($response->error) && strpos($response->error, 'The API Key has already been activated') !== false)
         {
-            error_log('[WPCA LIC] License already activated elsewhere, attempting deactivation + reactivation');
+            $this->log('License already activated elsewhere, attempting deactivation + reactivation');
             $deactivation = $this->deactivate($product_id, $api_key);
             
             if ($this->is_success($deactivation))
@@ -669,7 +742,9 @@ class CUAR_LicensingClient
             {
                 if ($keyStatus === 'Deactivated')
                 {
-                    return esc_html__( 'Update your license.', 'cuar' );
+                    return $this->is_expired()
+                        ? esc_html__('License no longer active: renew it to get updates.', 'cuar')
+                        : esc_html__('Update your license.', 'cuar');
                 }
 
                 return esc_html__('Auto-updates unavailable.', 'cuar');

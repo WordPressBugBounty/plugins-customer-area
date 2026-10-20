@@ -48,25 +48,12 @@
 			<a href="<?php echo cuar_site_url('/support'); ?>" class="button button-primary"
 			   target="_blank"><?php esc_html_e('Support', 'cuar'); ?></a>
 		</li>
-		<li>
-			<a href="https://twitter.com/share" class="twitter-share-button" data-url="<?php echo cuar_site_url(); ?>"
-			   data-text="<?php echo esc_attr__('An open-source (free) plugin for #WordPress to share private content, easily.', 'cuar'); ?>"
-			   data-via="WPCustomerArea" data-size="large" data-hashtags="WPCA">Tweet</a>
-			<script>!function (d, s, id)
-				{
-					var js, fjs = d.getElementsByTagName(s)[0];
-					if (!d.getElementById(id)) {
-						js = d.createElement(s);
-						js.id = id;
-						js.src = "//platform.twitter.com/widgets.js";
-						fjs.parentNode.insertBefore(js, fjs);
-					}
-				}(document, "script", "twitter-wjs");</script>
-		</li>
 		<li class="clear"></li>
 	</ul>
 
 	<div class="clear"></div>
+
+	<?php CUAR_AdminAreaAddOn::print_newsletter_box(); ?>
 
 	<!-- TAB BAR -->
 

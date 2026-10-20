@@ -61,11 +61,14 @@
     <div class="clear"></div>
 
     <p class="cuar-instructions">
-        <?php esc_html_e('Plugin updates, new add-ons and tips: follow our news on the WP Customer Area blog.', 'cuar'); ?>
+        <?php esc_html_e('Plugin updates, new add-ons and tips: get our newsletter (one email a month at most, unsubscribe at any time) or follow the WP Customer Area blog.', 'cuar'); ?>
     </p>
 
     <div class="cuar-actions">
-        <a href="<?php echo cuar_site_url('/blog'); ?>" class="button button-primary" target="_blank"><?php esc_html_e('Read the blog', 'cuar'); ?></a>
+        <?php if (class_exists('CUAR_AdminAreaAddOn') && !CUAR_AdminAreaAddOn::has_answered_newsletter()) : ?>
+            <a href="<?php echo esc_url(CUAR_AdminAreaAddOn::get_newsletter_action_url('subscribe')); ?>" class="button button-primary" target="_blank" rel="noopener"><?php esc_html_e('Subscribe to the newsletter', 'cuar'); ?></a>
+        <?php endif; ?>
+        <a href="<?php echo cuar_site_url('/blog'); ?>" class="button" target="_blank"><?php esc_html_e('Read the blog', 'cuar'); ?></a>
     </div>
 
 </div>

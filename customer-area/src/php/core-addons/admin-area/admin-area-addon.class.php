@@ -63,6 +63,9 @@ class CUAR_AdminAreaAddOn extends CUAR_AddOn {
 
 			// Ajax
 			add_action( 'wp_ajax_cuar_folder_action', array( &$this, 'ajax_folder_action' ) );
+
+			// Newsletter box (About page, setup wizard)
+			add_action( 'admin_post_cuar_newsletter', array( __CLASS__, 'handle_newsletter_action' ) );
 		} else {
 			add_action( 'init', array( &$this, 'hide_admin_bar' ) );
 		}
@@ -422,6 +425,64 @@ class CUAR_AdminAreaAddOn extends CUAR_AddOn {
 			CUAR_INCLUDES_DIR . '/core-addons/admin-area',
 			'dashboard-page.template.php',
 			'templates' ) );
+	}
+
+	/**
+	 * Hosted Brevo form of the WP Customer Area newsletter (double opt-in). The plugin itself
+	 * never sends any data: the administrator types their email on that form.
+	 */
+	public static function get_newsletter_form_url() {
+		return apply_filters( 'cuar/core/newsletter/form-url',
+			'https://cfee5680.sibforms.com/serve/MUIFAIf3TZMPcprbORCw2dbZetMb3UVuKiI7zC0pRocWpTwIgXWeZnde50rJ1qVoEku1opjKVro3Cf9X4jjd918n2YmRX_Ob3ehctRYk7RlTXLHci6GKKd3oPlpaqmeiI0aJkVcMyvQELLGxP_8b5ALCNGNg8BZNZ3X53muLhNblVM28koSmsYiE2PjmO_CD_fBKQEpWtRdigQHFMQ==' );
+	}
+
+	/**
+	 * Link that remembers the choice, then opens the form (subscribe) or hides the box (dismiss).
+	 */
+	public static function get_newsletter_action_url( $action ) {
+		return wp_nonce_url( add_query_arg( array( 'action' => 'cuar_newsletter', 'do' => $action ), admin_url( 'admin-post.php' ) ), 'cuar_newsletter' );
+	}
+
+	public static function has_answered_newsletter() {
+		return '' !== (string) get_user_meta( get_current_user_id(), 'cuar_newsletter_box', true );
+	}
+
+	/**
+	 * Small invitation on the About page, until the administrator subscribes or says no.
+	 */
+	public static function print_newsletter_box() {
+		if ( ! current_user_can( 'manage_options' ) || self::has_answered_newsletter() ) {
+			return;
+		}
+		?>
+		<div class="notice notice-info inline cuar-newsletter-box">
+			<p><strong><?php esc_html_e( 'Get WP Customer Area news', 'cuar' ); ?></strong></p>
+			<p><?php esc_html_e( 'One email a month at most: new features, add-ons, tips and offers. You confirm your subscription by email and can unsubscribe at any time.', 'cuar' ); ?></p>
+			<p>
+				<a href="<?php echo esc_url( self::get_newsletter_action_url( 'subscribe' ) ); ?>" class="button button-primary" target="_blank" rel="noopener"><?php esc_html_e( 'Subscribe', 'cuar' ); ?></a>
+				<a href="<?php echo esc_url( self::get_newsletter_action_url( 'dismiss' ) ); ?>" class="button"><?php esc_html_e( 'No thanks', 'cuar' ); ?></a>
+			</p>
+		</div>
+		<?php
+	}
+
+	public static function handle_newsletter_action() {
+		check_admin_referer( 'cuar_newsletter' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You are not allowed to do this.', 'cuar' ), 403 );
+		}
+
+		$action = isset( $_GET['do'] ) ? sanitize_key( wp_unslash( $_GET['do'] ) ) : '';
+		update_user_meta( get_current_user_id(), 'cuar_newsletter_box', 'subscribe' === $action ? 'subscribed' : 'dismissed' );
+
+		if ( 'subscribe' === $action ) {
+			// External form: wp_redirect, not wp_safe_redirect
+			wp_redirect( self::get_newsletter_form_url() );
+			exit;
+		}
+
+		wp_safe_redirect( wp_get_referer() ? wp_get_referer() : admin_url( 'admin.php?page=wpca' ) );
+		exit;
 	}
 
 	/**
