@@ -203,10 +203,10 @@ class CUAR_LogTable extends CUAR_ListTable
 
         if(!empty($user)) {
             $output = sprintf('<span title="%4$s" class="cuar-btn-xs ip">IP</span> <a href="%1$s" title="Profile of %2$s" class="cuar-btn-xs user">%3$s</a>',
-                admin_url('user-edit.php?user_id=' . $user_id),
+                esc_url(admin_url('user-edit.php?user_id=' . $user_id)),
                 esc_attr($user->display_name),
-                $user->user_login,
-                $item->ip);
+                esc_html($user->user_login),
+                esc_attr($item->ip));
         } else {
             $output = __('Unknown', 'cuar');
         }
@@ -240,11 +240,11 @@ class CUAR_LogTable extends CUAR_ListTable
                 ), $key, $item);
 
                 if (empty($meta['link'])) {
-                    $fields[] = sprintf('<span title="%1$s" class="cuar-btn-xs %3$s">%2$s</span>', $meta['title'],
-                        esc_attr($meta['value']), $key);
+                    $fields[] = sprintf('<span title="%1$s" class="cuar-btn-xs %3$s">%2$s</span>', esc_attr($meta['title']),
+                        esc_html($meta['value']), esc_attr($key));
                 } else {
-                    $fields[] = sprintf('<a href="%4$s" title="%1$s" class="cuar-btn-xs %3$s">%2$s</a>', $meta['title'],
-                        esc_attr($meta['value']), $key, esc_attr($meta['link']));
+                    $fields[] = sprintf('<a href="%4$s" title="%1$s" class="cuar-btn-xs %3$s">%2$s</a>', esc_attr($meta['title']),
+                        esc_html($meta['value']), esc_attr($key), esc_url($meta['link']));
                 }
             }
         }

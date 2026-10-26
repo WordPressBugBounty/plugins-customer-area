@@ -53,7 +53,7 @@ include_once( CUAR_INCLUDES_DIR . '/core-classes/object-meta/renderer/abstract-i
 				wp_enqueue_script('user-profile');
 
 				$out = '';
-				$out .= '<select name="' . $id . '" id="' . $id . '" class="form-control">' . "\n";
+				$out .= '<select name="' . esc_attr($id) . '" id="' . esc_attr($id) . '" class="form-control">' . "\n";
 				$public_display = array();
 				$public_display['display_nickname'] = $current_user->nickname;
 				$public_display['display_username'] = $current_user->user_login;
@@ -76,7 +76,7 @@ include_once( CUAR_INCLUDES_DIR . '/core-classes/object-meta/renderer/abstract-i
 				$public_display = array_unique($public_display);
 
 				foreach ($public_display as $id => $item) {
-					$out .= '<option ' . selected($current_user->display_name, $item, false) . '>' . $item . '</option>' . "\n";
+					$out .= '<option value="' . esc_attr($item) . '" ' . selected($current_user->display_name, $item, false) . '>' . esc_html($item) . '</option>' . "\n";
 				}
 				$out .= '</select>' . "\n";
 				return $out;

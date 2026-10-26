@@ -1,5 +1,8 @@
 <?php
-/** Template version: 3.1.0
+/** Template version: 3.1.1
+ *
+ * -= 3.1.1 =-
+ * - Escape the term name (security fix)
  *
  * -= 3.1.0 =-
  * - Use new format for term data
@@ -25,9 +28,9 @@
 
         // Print the current term
         printf('<a href="%1$s" title="%3$s" class="label label-default label-sm">%2$s</a>',
-            $link,
-            $term->name,
-            sprintf(esc_attr__('Show all content categorized under %s', 'cuar'), $term->name)
+            esc_url($link),
+            esc_html($term->name),
+            esc_attr(sprintf(__('Show all content categorized under %s', 'cuar'), $term->name))
         );
     }
     ?>

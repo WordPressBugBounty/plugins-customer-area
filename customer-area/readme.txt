@@ -6,7 +6,7 @@ Tags:               private files,client area,customer area,client portal,custom
 Requires at least:  5.0
 Requires PHP:       7.2
 Tested up to:       7.1
-Stable tag:         8.4.0
+Stable tag:         8.4.1
 License:            GPLv2 or later
 License URI:        http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -103,6 +103,12 @@ You have all the information on the [plugin website](https://wp-customerarea.com
 Open a new topic on the plugin's support forum, I will consider every feature request and all ideas are welcome.
 
 == Changelog ==
+
+= 8.4.1 (2026/10/26) =
+
+* Security: user, group, project and role names are now escaped everywhere they are displayed (Logs screen, content owner links, widgets, account form). Names saved from the account form can no longer contain HTML or double quotes. Updating is recommended.
+* Thanks to Kuba (Wordfence) for responsibly reporting CVE-2026-116551, fixed in 8.4.1.
+* Template versions bumped: post-owner-link-usr, -grp, -prj, -rol (1.0.1), widget-content-authors, widget-content-list (3.0.1), widget-terms-cloud, widget-terms-tree (3.1.1). If your theme overrides them, update your copies.
 
 = 8.4.0 (2026/10/20) =
 

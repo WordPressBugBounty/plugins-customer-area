@@ -33,7 +33,12 @@ class CUAR_UserStorage implements CUAR_Storage {
 
 	public function update_field_value( $object_id, $field_id, $value ) {
 		if ( !in_array( $field_id, self::$VALID_FIELDS ) ) return;
-		
+
+		// Names end up in HTML attributes: no markup and no double quotes
+		if ( in_array( $field_id, array( 'display_name', 'nickname', 'first_name', 'last_name' ) ) ) {
+			$value = str_replace( array( '"', '<', '>' ), '', sanitize_text_field( $value ) );
+		}
+
 		wp_update_user( array ( 'ID' => $object_id, $field_id => $value ) ) ;
 	}
 
