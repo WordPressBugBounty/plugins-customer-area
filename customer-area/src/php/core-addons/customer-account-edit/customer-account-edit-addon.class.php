@@ -93,6 +93,9 @@ if (!class_exists('CUAR_CustomerAccountEditAddOn')) :
                 die('You are not allowed to view this page.');
             }
 
+            // The submission is verified: fields may now be refilled with the posted values
+            add_filter('cuar/core/fields/use-posted-values', '__return_true');
+
             $current_user_id = get_current_user_id();
 
             $up_addon = $this->plugin->get_addon('user-profile');
@@ -168,7 +171,7 @@ if (!class_exists('CUAR_CustomerAccountEditAddOn')) :
             {
                 foreach ($this->form_errors as $error)
                 {
-                    printf('<p class="alert alert-warning">%s</p>', $error);
+                    printf('<p class="alert alert-warning">%s</p>', esc_html($error));
                 }
             }
 

@@ -425,7 +425,7 @@ if ( !class_exists('CUAR_AbstractContainerPageAddOn')) :
 
             // Paging
             $pagination_param = _x('page-num', 'pagination_parameter_name (should not be "page")', 'cuar');
-            $current_page = isset($_GET[$pagination_param]) ? $_GET[$pagination_param] : 1;
+            $current_page = isset($_GET[$pagination_param]) ? max(1, (int) $_GET[$pagination_param]) : 1;
             $posts_per_page = $this->get_max_item_number_in_listing();
             $pagination_base = '';
 
@@ -494,6 +494,8 @@ if ( !class_exists('CUAR_AbstractContainerPageAddOn')) :
 
             $page_subtitle = apply_filters('cuar/core/page/subtitle?slug=' . $page_slug, $page_subtitle);
             $page_subtitle = apply_filters('cuar/core/page/subtitle?slug=' . $page_slug . '&display-mode=' . $display_mode, $page_subtitle);
+            // Templates (add-ons, theme overrides) echo the subtitle as is
+            $page_subtitle = wp_kses_post($page_subtitle);
 
             if ($content_query->have_posts())
             {

@@ -53,9 +53,9 @@ abstract class CUAR_SimpleField extends CUAR_AbstractField implements CUAR_Field
 
 	// See CUAR_Field
 	public function render_form_field( $object_id ) {
-		// Get the field value either from POST data or from the DB storage
-		if ( isset( $_POST[$this->get_id()] ) ) {
-			$value = $_POST[$this->get_id()];
+		// Get the field value either from POST data (only after a verified form submission) or from the DB storage
+		if ( isset( $_POST[$this->get_id()] ) && apply_filters( 'cuar/core/fields/use-posted-values', false, $this ) ) {
+			$value = wp_unslash( $_POST[$this->get_id()] );
 		} else {
 			$value = $this->get_storage()->fetch_field_value( $object_id, $this->get_id() );
 		}

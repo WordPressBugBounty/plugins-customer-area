@@ -6,7 +6,7 @@ Tags:               private files,client area,customer area,client portal,custom
 Requires at least:  5.0
 Requires PHP:       7.2
 Tested up to:       7.1
-Stable tag:         8.4.1
+Stable tag:         8.4.2
 License:            GPLv2 or later
 License URI:        http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -103,6 +103,14 @@ You have all the information on the [plugin website](https://wp-customerarea.com
 Open a new topic on the plugin's support forum, I will consider every feature request and all ideas are welcome.
 
 == Changelog ==
+
+= 8.4.2 (2026/10/29) =
+
+* Security: the pagination and date archive parameters of the private files, pages and add-on listings (`page-num`, `cuar_year`, `cuar_month`, `cuar_author`, `cuar_category`) are now validated, and listing subtitles are filtered before display. This fixes a reflected cross-site scripting issue. Updating is recommended.
+* Security: the "Edit account" page now escapes the Biography field and only refills the form with submitted values after the form's security check has passed. This fixes a reflected cross-site scripting issue. Updating is recommended.
+* Hardening: author names and collection types are escaped in the private files and pages listings, and account form error messages are escaped.
+* Thanks to Van Phuc (VCI - VNPT Cyber Immunity) and mroccon for responsibly reporting these issues through Patchstack.
+* Template versions bumped: customer-private-files-content, customer-private-pages-content (3.2.1), customer-private-files-content-item, customer-private-pages-content-item (3.3.1). If your theme overrides them, update your copies.
 
 = 8.4.1 (2026/10/26) =
 

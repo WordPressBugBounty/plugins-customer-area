@@ -109,12 +109,12 @@ if ( !class_exists('CUAR_CustomerPrivateFilesAddOn')) :
 
             $author = get_userdata($author_id);
 
-            return sprintf(__('Files created by %1$s', 'cuar'), $author->display_name);
+            return sprintf(__('Files created by %1$s', 'cuar'), esc_html($author->display_name));
         }
 
         protected function get_category_archive_page_subtitle($category)
         {
-            return sprintf(__('Files under %1$s', 'cuar'), $category->name);
+            return sprintf(__('Files under %1$s', 'cuar'), esc_html($category->name));
         }
 
         protected function get_date_archive_page_subtitle($year, $month = 0)
@@ -122,11 +122,11 @@ if ( !class_exists('CUAR_CustomerPrivateFilesAddOn')) :
             if (isset($month) && ((int)($month) > 0))
             {
                 $month_name = date_i18n("F", mktime(0, 0, 0, (int)$month, 10));
-                $page_subtitle = sprintf(__('Files published in %2$s %1$s', 'cuar'), $year, $month_name);
+                $page_subtitle = sprintf(__('Files published in %2$s %1$s', 'cuar'), (int) $year, esc_html($month_name));
             }
             else
             {
-                $page_subtitle = sprintf(__('Files published in %1$s', 'cuar'), $year);
+                $page_subtitle = sprintf(__('Files published in %1$s', 'cuar'), (int) $year);
             }
 
             return $page_subtitle;

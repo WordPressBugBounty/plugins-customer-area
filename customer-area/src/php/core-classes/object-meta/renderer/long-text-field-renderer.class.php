@@ -59,18 +59,18 @@ class CUAR_LongTextFieldRenderer extends CUAR_AbstractFieldRenderer implements C
 				return $out;
 			} else {
 				return sprintf( '<textarea rows="5" cols="40" id="%1$s" name="%2$s" class="%4$s" %5$s>%3$s</textarea>',
-					$id,
-					$id,
-					$value,
+					esc_attr( $id ),
+					esc_attr( $id ),
+					esc_textarea( $value ),
 					'form-control cuar-js-richeditor',
 					($this->readonly ? 'readonly="readonly"' : '')
 				);
 			}
 		} else {
 			return sprintf( '<textarea rows="5" cols="40" id="%1$s" name="%2$s" class="%4$s" %5$s>%3$s</textarea>',
-					$id,
-					$id,
-					$value, 
+					esc_attr( $id ),
+					esc_attr( $id ),
+					esc_textarea( $value ),
 					'form-control textarea-grow',
 					($this->readonly ? 'readonly="readonly"' : '')
 				);

@@ -1,5 +1,8 @@
 <?php
-/** Template version: 3.2.0
+/** Template version: 3.2.1
+ *
+ * -= 3.2.1 =-
+ * - Escape the page number and the collection type (security fix)
  *
  * -= 3.2.0 =-
  * - Use bootstrap columns system instead of percentages width in collection view to prevent too much columns to be
@@ -28,14 +31,14 @@ $post_type = $current_addon->get_friendly_post_type();
 <div class="cuar-collection-title page-heading">
     <div class="cuar-title h2">
         <small class="pull-right">
-            <?php echo wp_sprintf(__('Page %1$s/%2$s', 'cuar'), $current_page, $content_query->max_num_pages); ?>
+            <?php echo esc_html(wp_sprintf(__('Page %1$s/%2$s', 'cuar'), (int) $current_page, (int) $content_query->max_num_pages)); ?>
         </small>
         <?php echo $page_subtitle; ?>
     </div>
 </div>
 
-<div class="collection <?php echo $post_type; ?>">
-    <div id="cuar-js-collection-gallery" class="collection-content" data-type="<?php echo $post_type; ?>">
+<div class="collection <?php echo esc_attr($post_type); ?>">
+    <div id="cuar-js-collection-gallery" class="collection-content" data-type="<?php echo esc_attr($post_type); ?>">
         <div class="fail-message alert alert-warning">
             <?php _e('No items were found matching the selected filters', 'cuar'); ?>
         </div>

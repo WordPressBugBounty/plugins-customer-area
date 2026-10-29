@@ -456,11 +456,12 @@ if ( !class_exists('CUAR_AbstractContentPageAddOn')) :
             $current_user_id = get_current_user_id();
             $page_slug = $this->get_slug();
 
-            // Display mode
-            $year = get_query_var('cuar_year');
-            $month = get_query_var('cuar_month');
-            $category = get_query_var('cuar_category');
-            $author_id = get_query_var('cuar_author');
+            // Display mode (public query vars: never trust them, they end up in the page subtitle)
+            $year = absint(get_query_var('cuar_year'));
+            $month = absint(get_query_var('cuar_month'));
+            if ($month > 12) $month = 0;
+            $category = sanitize_title(get_query_var('cuar_category'));
+            $author_id = absint(get_query_var('cuar_author'));
             $display_mode = 'default';
 
             // Texts
@@ -468,7 +469,7 @@ if ( !class_exists('CUAR_AbstractContentPageAddOn')) :
 
             // Paging
             $pagination_param = _x('page-num', 'pagination_parameter_name (should not be "page")', 'cuar');
-            $current_page = isset($_GET[$pagination_param]) ? $_GET[$pagination_param] : 1;
+            $current_page = isset($_GET[$pagination_param]) ? max(1, (int) $_GET[$pagination_param]) : 1;
             $posts_per_page = $this->get_max_item_number_in_listing();
             $pagination_base = '';
 
@@ -576,6 +577,8 @@ if ( !class_exists('CUAR_AbstractContentPageAddOn')) :
 
             $page_subtitle = apply_filters('cuar/core/page/subtitle?slug=' . $page_slug, $page_subtitle);
             $page_subtitle = apply_filters('cuar/core/page/subtitle?slug=' . $page_slug . '&display-mode=' . $display_mode, $page_subtitle);
+            // Templates (add-ons, theme overrides) echo the subtitle as is: it may hold a user's display name
+            $page_subtitle = wp_kses_post($page_subtitle);
 
             if ($content_query->have_posts())
             {
