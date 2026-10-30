@@ -163,19 +163,35 @@ if (!class_exists('CUAR_AddOn')) :
                 $is_wpca_posttype = isset($_GET['post_type']) && substr($_GET['post_type'], 0, 5) === 'cuar_';
                 if ($is_wpca_page || $is_wpca_posttype)
                 {
+                    // Add-ons from the 7.x generation (old store licensing) cannot run with core 8+ and cannot update themselves
+                    $utm = [
+                        'utm_source'   => 'wp-admin',
+                        'utm_medium'   => 'plugin',
+                        'utm_campaign' => 'legacy-addon',
+                    ];
+                    $shop_url = CUAR_LicensingClient::get_shop_url();
+                    $downloads_url = add_query_arg($utm, $shop_url . '/account/api-downloads/');
+                    $addons_url = add_query_arg($utm, $shop_url . '/addons/');
+
                     wp_die(
-                        "The WP Customer Area add-on « {$this->get_addon_name()} » is outdated and not compatible with WP Customer Area 8 or greater. "
-                        . 'You must either downgrade to WP Customer Area 7.10.6 (available on request from the support team) or update your addons to the latest version.'
-                        . '<br>'
-                        . '<br>'
-                        . 'If you plan to update, in order to be able to download the latest addons, please contact the WP Customer Area '
-                        . 'support team via <a href="mailto:support@wp-customerarea.com">support@wp-customerarea.com</a> '
-                        . 'providing the following information:'
-                        . '<ul>'
-                        . '<li>The email linked to your customer account</li>'
-                        . '<li>The date of purchase</li>'
-                        . '<li>The payment method used (Paypal or Credit card via Stripe)</li>'
-                        . '</ul>'
+                        '<h1>' . esc_html__('This add-on needs to be updated', 'cuar') . '</h1>'
+                        . '<p>' . sprintf(
+                            esc_html__('The add-on « %s » was made for WP Customer Area 7 and does not work with WP Customer Area 8 or greater. Since version 8, add-ons use a new licensing system, so this old version cannot update itself: it must be replaced by its latest version, once.', 'cuar'),
+                            esc_html($this->get_addon_name())
+                        ) . '</p>'
+                        . '<p><strong>' . esc_html__('If you have an active subscription', 'cuar') . '</strong><br>'
+                        . sprintf(
+                            esc_html__('Download the latest version of your add-ons from %1$s, upload each one from Plugins > Add New > Upload Plugin, then enter your license keys in the WP Customer Area license settings. Future updates will then come through the WordPress updates screen.', 'cuar'),
+                            '<a href="' . esc_url($downloads_url) . '" target="_blank">' . esc_html__('your account on wp-customerarea.com', 'cuar') . '</a>'
+                        ) . '</p>'
+                        . '<p><strong>' . esc_html__('If your license has expired or was bought before 2021', 'cuar') . '</strong><br>'
+                        . sprintf(
+                            esc_html__('A current license is required to download the latest version. You can get one from %1$s (bundles are usually cheaper if you use several add-ons).', 'cuar'),
+                            '<a href="' . esc_url($addons_url) . '" target="_blank">' . esc_html__('the add-ons page', 'cuar') . '</a>'
+                        ) . '</p>'
+                        . '<p>' . esc_html__('Going back to WP Customer Area 7 is not recommended: those versions contain security issues fixed in the current release.', 'cuar') . '</p>',
+                        esc_html__('WP Customer Area add-on outdated', 'cuar'),
+                        ['back_link' => true]
                     );
                 }
             }

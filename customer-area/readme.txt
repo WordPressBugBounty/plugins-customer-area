@@ -6,7 +6,7 @@ Tags:               private files,client area,customer area,client portal,custom
 Requires at least:  5.0
 Requires PHP:       7.2
 Tested up to:       7.1
-Stable tag:         8.4.2
+Stable tag:         8.4.3
 License:            GPLv2 or later
 License URI:        http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -103,6 +103,10 @@ You have all the information on the [plugin website](https://wp-customerarea.com
 Open a new topic on the plugin's support forum, I will consider every feature request and all ideas are welcome.
 
 == Changelog ==
+
+= 8.4.3 (2026/10/30) =
+
+* Improvement: clearer message when an outdated WP Customer Area 7 add-on is still installed.
 
 = 8.4.2 (2026/10/29) =
 
