@@ -32,6 +32,12 @@ class CUAR_TestPaymentGateway extends CUAR_AbstractPaymentGateway
         return __('The test gateway allows you to see how your website is behaving when the gateways return different results.', 'cuar');
     }
 
+    public function is_enabled()
+    {
+        // Never let customers mark their payments as paid on a live site
+        return parent::is_enabled() && defined('WP_DEBUG') && WP_DEBUG;
+    }
+
     public function has_form()
     {
         return true;
@@ -74,7 +80,7 @@ class CUAR_TestPaymentGateway extends CUAR_AbstractPaymentGateway
     {
         $g = new CUAR_TestPaymentGateway(cuar());
 
-        $defaults[$g->get_option_id(self::$OPTION_ENABLED)] = true;
+        $defaults[$g->get_option_id(self::$OPTION_ENABLED)] = false;
         $defaults[$g->get_option_id(self::$OPTION_LOG_ENABLED)] = true;
 
         return $defaults;

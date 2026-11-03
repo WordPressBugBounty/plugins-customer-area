@@ -105,7 +105,7 @@ if ( !class_exists('CUAR_CurrencyHelper')) :
                     break;
 
                 default :
-                    $symbol = $currencyCode;
+                    $symbol = esc_html($currencyCode);
                     break;
             }
 

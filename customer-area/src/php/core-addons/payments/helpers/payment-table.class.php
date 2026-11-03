@@ -223,8 +223,8 @@ class CUAR_PaymentTable extends CUAR_ListTable
         return sprintf('<a href="%1$s" title="Profile of %2$s" class="cuar-btn-xs user">%3$s</a><br>%4$s',
             admin_url('user-edit.php?user_id=' . $user_id),
             esc_attr($user->user_login),
-            $user->display_name,
-            $user->user_email);
+            esc_html($user->display_name),
+            esc_html($user->user_email));
     }
 
     /**

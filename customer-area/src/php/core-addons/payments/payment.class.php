@@ -315,7 +315,7 @@ class CUAR_Payment extends CUAR_CustomPost
     public function set_currency($currency)
     {
         $previous_value = $this->get_currency();
-        $new_value = $currency;
+        $new_value = strtoupper(preg_replace('/[^A-Za-z]/', '', (string) $currency));
 
         update_post_meta($this->ID, self::$META_CURRENCY, $new_value);
 

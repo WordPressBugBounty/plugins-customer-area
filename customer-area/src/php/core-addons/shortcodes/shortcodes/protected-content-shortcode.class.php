@@ -78,7 +78,8 @@ class CUAR_ProtectedContentShortcode extends CUAR_Shortcode
         $plugin = cuar();
         $current_user_id = get_current_user_id();
 
-        $layout = $params['layout'];
+        $layout = sanitize_key($params['layout']);
+        if (empty($layout)) $layout = 'default';
         $type = $params['type'];
         $title = $params['title'];
 

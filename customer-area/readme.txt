@@ -6,7 +6,7 @@ Tags:               private files,client area,customer area,client portal,custom
 Requires at least:  5.0
 Requires PHP:       7.2
 Tested up to:       7.1
-Stable tag:         8.4.3
+Stable tag:         8.4.4
 License:            GPLv2 or later
 License URI:        http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -103,6 +103,15 @@ You have all the information on the [plugin website](https://wp-customerarea.com
 Open a new topic on the plugin's support forum, I will consider every feature request and all ideas are welcome.
 
 == Changelog ==
+
+= 8.4.4 (2026/11/02) =
+
+* Security: the payment currency is now checked against the list of known currencies, saved as a plain code and escaped on display. This fixes a stored cross-site scripting issue in the admin payments list. Updating is recommended.
+* Security: payments can only be started by a logged-in user for an item they own, and the test payment gateway is now disabled by default and only available when WP_DEBUG is on.
+* Security: the `layout` and `title` attributes of the `[customer-area-protected-content]` shortcode are now sanitized and escaped. This fixes a stored cross-site scripting issue. Updating is recommended.
+* Hardening: user names and e-mails are escaped in the payments screens, and shortcode error messages are escaped.
+* Thanks to Lee Bales and HeeDong Cho for responsibly reporting these issues through Patchstack.
+* Template versions bumped: protected-content-shortcode-loop-default, protected-content-shortcode-empty-default, protected-content-shortcode-layout-default-before, protected-content-shortcode-layout-list-before (3.0.1), payment-editor-payer (3.2.1). If your theme overrides them, update your copies.
 
 = 8.4.3 (2026/10/30) =
 

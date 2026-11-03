@@ -1,6 +1,9 @@
 <?php
 /**
- * Template version: 3.2.0
+ * Template version: 3.2.1
+ *
+ * -= 3.2.1 =-
+ * - Escape user display names (security hardening)
  *
  * -= 3.2.0 =-
  * - Update address fields
@@ -25,7 +28,7 @@ $selectable_users = get_users();
             <label for="payer_user_id" class="control-label"><?php _e('User', 'cuar'); ?></label>
             <select name="payer[user_id]" id="payer_user_id" data-placeholder="<?php esc_attr_e('Select user', 'cuar'); ?>">
                 <?php foreach ($selectable_users as $u) : ?>
-                    <option value="<?php echo $u->ID; ?>" <?php selected($user_id, $u->ID); ?>><?php echo $u->display_name; ?>
+                    <option value="<?php echo $u->ID; ?>" <?php selected($user_id, $u->ID); ?>><?php echo esc_html($u->display_name); ?>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</option>
                 <?php endforeach; ?>
             </select>

@@ -125,8 +125,8 @@ class CUAR_PaymentsUiHelper
         if ( !isset($_POST['cuar_action']) || $_POST['cuar_action'] !== 'process_payment') return;
 
         // Get payment data as submitted by the checkout form
-        $object_id = isset($_POST['cuar_object_id']) ? $_POST['cuar_object_id'] : 0;
-        $object_type = isset($_POST['cuar_object_type']) ? $_POST['cuar_object_type'] : '';
+        $object_id = isset($_POST['cuar_object_id']) ? absint($_POST['cuar_object_id']) : 0;
+        $object_type = isset($_POST['cuar_object_type']) ? sanitize_key($_POST['cuar_object_type']) : '';
 
         // Verify nonce
         $nonce_action = 'process_payment_' . md5($object_type . $object_id);
@@ -138,18 +138,32 @@ class CUAR_PaymentsUiHelper
         }
 
         // Get more required payment data
-        $amount = isset($_POST['cuar_amount']) ? $_POST['cuar_amount'] : 0;
-        $currency = isset($_POST['cuar_currency']) ? $_POST['cuar_currency'] : '';
-        $gateway_id = isset($_POST['cuar_selected_gateway']) ? $_POST['cuar_selected_gateway'] : '';
+        $amount = isset($_POST['cuar_amount']) ? CUAR_CurrencyHelper::sanitizeAmount(wp_unslash($_POST['cuar_amount'])) : 0;
+        $currency = isset($_POST['cuar_currency']) ? strtoupper(sanitize_text_field(wp_unslash($_POST['cuar_currency']))) : '';
+        $gateway_id = isset($_POST['cuar_selected_gateway']) ? sanitize_key($_POST['cuar_selected_gateway']) : '';
         $selected_gateway = $this->pa_addon->settings()->get_gateway($gateway_id);
-        if (empty($object_type) || 0 == $object_id || empty($currency) || $selected_gateway == false)
+
+        // Only accept known currency codes
+        if ( !array_key_exists($currency, CUAR_CurrencyHelper::getCurrencies())) $currency = '';
+
+        if (empty($object_type) || 0 == $object_id || empty($currency) || $amount <= 0 || $selected_gateway == false)
         {
             wp_die(__('Some checkout information has not been provided, please go back and try again', 'cuar'));
         }
 
+        // The object must be payable, and the current user must be allowed to pay for it
+        $can_pay = is_user_logged_in()
+            && in_array($object_type, $this->pa_addon->get_payable_types(), true)
+            && get_post_type($object_id) === $object_type
+            && cuar_addon('post-owner')->is_user_owner_of_post($object_id, get_current_user_id());
+        if ( !apply_filters('cuar/core/payments/can-pay', $can_pay, $object_type, $object_id, get_current_user_id()))
+        {
+            wp_die(__('You are not allowed to pay for this item.', 'cuar'), '', array('response' => 403));
+        }
+
         // And some more data, optional this time
         $address = isset($_POST['cuar_address']) ? $_POST['cuar_address'] : array();
-        $gateway_params = isset($_POST['cuar_gateway']) && isset($_POST['cuar_gateway'][$gateway_id]) ? $_POST['cuar_gateway'][$gateway_id] : array();
+        $gateway_params = isset($_POST['cuar_gateway']) && isset($_POST['cuar_gateway'][$gateway_id]) && is_array($_POST['cuar_gateway'][$gateway_id]) ? wp_unslash($_POST['cuar_gateway'][$gateway_id]) : array();
 
         // Data we compute directly
         $user_id = get_current_user_id();

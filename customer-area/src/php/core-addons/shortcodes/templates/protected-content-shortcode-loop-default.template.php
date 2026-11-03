@@ -1,5 +1,8 @@
 <?php
-/** Template version: 3.0.0
+/** Template version: 3.0.1
+ *
+ * -= 3.0.1 =-
+ * - Escape class attributes (security fix)
  *
  * -= 3.0.0 =-
  * - Improve UI for new master-skin
@@ -16,7 +19,7 @@
 <?php /** @var string $after_items_template */ ?>
 <?php /** @var WP_Query $query */ ?>
 
-<div class="cuar-css-wrapper cuar-sc-protected-content cuar-sc-protected-content-<?php echo $layout ?> <?php echo $type ?>">
+<div class="cuar-css-wrapper cuar-sc-protected-content cuar-sc-protected-content-<?php echo esc_attr($layout); ?> <?php echo esc_attr($type); ?>">
     <?php
     global $post;
     $post_backup = $post;
