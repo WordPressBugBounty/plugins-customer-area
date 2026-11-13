@@ -50,7 +50,7 @@ abstract class CUAR_AbstractFieldRenderer implements CUAR_FieldRenderer {
 
 	// See CUAR_FieldRenderer
 	public function render_raw_value( $value ) {
-		echo $value;
+		echo esc_html( $value );
 	}
 	
 	/*------- READ-ONLY DISPLAY -------------------------------------------------------------------------------------*/

@@ -6,7 +6,7 @@ Tags:               private files,client area,customer area,client portal,custom
 Requires at least:  5.0
 Requires PHP:       7.2
 Tested up to:       7.1
-Stable tag:         8.4.4
+Stable tag:         8.4.5
 License:            GPLv2 or later
 License URI:        http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -103,6 +103,13 @@ You have all the information on the [plugin website](https://wp-customerarea.com
 Open a new topic on the plugin's support forum, I will consider every feature request and all ideas are welcome.
 
 == Changelog ==
+
+= 8.4.5 (2026/11/10) =
+
+* Security: hardened access checks on the front-office content edit and delete pages, the payment checkout page and the address forms. Updating is recommended.
+* Security: capability checks added to the Status page actions and to manual payment creation. Thanks to mobin2021 for reporting this.
+* Hardening: profile field values, user and owner names, and form and payment messages are escaped on display; file attachment methods are limited to the enabled ones.
+* Template versions bumped: customer-account-content (5.0.1), customer-account-edit-content (4.1.1), post-owner-fields (3.2.1), payments-success-content and payments-failure-content (3.0.1). If your theme overrides them, update your copies.
 
 = 8.4.4 (2026/11/02) =
 

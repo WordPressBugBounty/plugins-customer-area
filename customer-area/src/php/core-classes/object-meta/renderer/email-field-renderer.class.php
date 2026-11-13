@@ -34,12 +34,12 @@ class CUAR_EmailFieldRenderer extends CUAR_AbstractInputFieldRenderer implements
 
 	protected function get_readonly_field_value( $id, $value ) {
 		if ( empty( $value ) ) return ''; 
-		return sprintf( '<a href="mailto:%1$s">%1$s</a>', $value );
+		return sprintf( '<a href="mailto:%1$s">%2$s</a>', esc_attr( $value ), esc_html( $value ) );
 	}
 
 	// See CUAR_FieldRenderer
 	public function render_raw_value( $value ) {
-		printf( '<a href="mailto:%1$s">%1$s</a>', $value );
+		printf( '<a href="mailto:%1$s">%2$s</a>', esc_attr( $value ), esc_html( $value ) );
 	}
 }
 

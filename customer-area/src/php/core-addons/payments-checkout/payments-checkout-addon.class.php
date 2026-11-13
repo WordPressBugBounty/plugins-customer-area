@@ -93,10 +93,11 @@ if ( !class_exists('CUAR_PaymentsCheckoutAddOn')) :
             $error_message = $this->plugin->get_session_var('cuar_checkout_error', '');
             $this->plugin->unset_session_var('cuar_checkout_error');
 
-            $object_id = isset($form_data['cuar_object_id']) ? $form_data['cuar_object_id'] : 0;
-            $object_type = isset($form_data['cuar_object_type']) ? $form_data['cuar_object_type'] : '';
-            $amount = isset($form_data['cuar_amount']) ? $form_data['cuar_amount'] : 0;
-            $currency = isset($form_data['cuar_currency']) ? $form_data['cuar_currency'] : '';
+            $object_id = isset($form_data['cuar_object_id']) ? absint($form_data['cuar_object_id']) : 0;
+            $object_type = isset($form_data['cuar_object_type']) ? sanitize_key($form_data['cuar_object_type']) : '';
+            $amount = isset($form_data['cuar_amount']) ? CUAR_CurrencyHelper::sanitizeAmount(wp_unslash($form_data['cuar_amount'])) : 0;
+            $currency = isset($form_data['cuar_currency']) ? strtoupper(sanitize_text_field(wp_unslash($form_data['cuar_currency']))) : '';
+            if ( !array_key_exists($currency, CUAR_CurrencyHelper::getCurrencies())) $currency = '';
             $address = isset($form_data['cuar_address']) ? $form_data['cuar_address'] : array();
             $selected_gateway = isset($form_data['cuar_gateway']) ? $form_data['cuar_gateway'] : '';
 
@@ -105,9 +106,16 @@ if ( !class_exists('CUAR_PaymentsCheckoutAddOn')) :
                 die(__('Some checkout information has not been provided, please go back and try again', 'cuar'));
             }
 
-            // Payment gateways
             /** @var CUAR_PaymentsAddOn $pa_addon */
             $pa_addon = $this->plugin->get_addon('payments');
+
+            // Only the owner of the item can see its checkout page
+            if ( !$pa_addon->ui()->can_current_user_pay_for($object_type, $object_id))
+            {
+                die(esc_html__('You are not allowed to pay for this item.', 'cuar'));
+            }
+
+            // Payment gateways
             $gateways = $pa_addon->settings()->get_enabled_gateways();
             if (empty($selected_gateway))
             {

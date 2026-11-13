@@ -39,7 +39,12 @@ class CUAR_LongTextFieldRenderer extends CUAR_AbstractFieldRenderer implements C
 	}
 
 	protected function get_readonly_field_value( $id, $value ) {
-		return $value;
+		return wp_kses_post( $value );
+	}
+
+	// See CUAR_FieldRenderer
+	public function render_raw_value( $value ) {
+		echo wp_kses_post( $value );
 	}
 
 	protected function get_form_field_input( $id, $value ) {

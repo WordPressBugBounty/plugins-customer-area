@@ -274,7 +274,11 @@ if ( !class_exists('CUAR_AddressesAddOn')) :
 
 		    $authorized = false;
 		    $user_id = get_current_user_id();
-		    if ($context[0] === 'post')
+		    if ( !is_user_logged_in())
+		    {
+			    $authorized = false;
+		    }
+		    else if ($context[0] === 'post')
 		    {
 			    $po_addon = cuar_addon('post-owner');
 			    $authorized = $po_addon->is_user_owner_of_post($context[1], $user_id )
@@ -289,7 +293,8 @@ if ( !class_exists('CUAR_AddressesAddOn')) :
 		    }
 		    else if ($context[0] === 'payment')
 		    {
-			    $authorized = $ownerType === 'post'
+			    $authorized = current_user_can('cuar_pay_edit')
+			                  && $ownerType === 'post'
 			                  && count($ownerIds) === 1
 			                  && ((int) $ownerIds[0]) === ((int)$context[1]);
 		    }

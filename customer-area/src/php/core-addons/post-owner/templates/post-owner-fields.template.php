@@ -1,6 +1,9 @@
 <?php /**
- * Template version: 3.2.0
+ * Template version: 3.2.1
  * Template zone: admin|frontend
+ *
+ * -= 3.2.1 =-
+ * - Escape owner names (security hardening)
  *
  * -= 3.2.0 =-
  * - Prevent Select2 assignment boxes to fail while initializing if the theme or a plugin is already loading Select2
@@ -61,7 +64,7 @@
                 <?php if (isset($owners[$type_id])) { ?>
                     <?php foreach ($owners[$type_id] as $id) : ?>
                         <option value="<?php echo esc_attr($id); ?>" selected="selected"><?php
-                            echo $po_addon->get_owner_display_name($type_id, $id);
+                            echo esc_html($po_addon->get_owner_display_name($type_id, $id));
                             ?></option>
                     <?php endforeach; ?>
                 <?php } ?>

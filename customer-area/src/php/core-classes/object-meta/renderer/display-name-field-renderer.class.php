@@ -42,7 +42,7 @@ include_once( CUAR_INCLUDES_DIR . '/core-classes/object-meta/renderer/abstract-i
 
 		protected function get_readonly_field_value($id, $value)
 		{
-			return $value;
+			return esc_html($value);
 		}
 
 		protected function get_form_field_input($id, $value)

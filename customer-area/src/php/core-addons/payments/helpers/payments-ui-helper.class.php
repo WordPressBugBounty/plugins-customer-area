@@ -117,6 +117,25 @@ class CUAR_PaymentsUiHelper
         include($template);
     }
 
+    /**
+     * Check that the object can be paid and that the current user is allowed to pay for it
+     *
+     * @param string $object_type
+     * @param int    $object_id
+     *
+     * @return bool
+     */
+    public function can_current_user_pay_for($object_type, $object_id)
+    {
+        $user_id = get_current_user_id();
+        $can_pay = is_user_logged_in()
+            && in_array($object_type, $this->pa_addon->get_payable_types(), true)
+            && get_post_type($object_id) === $object_type
+            && cuar_addon('post-owner')->is_user_owner_of_post($object_id, $user_id);
+
+        return (bool) apply_filters('cuar/core/payments/can-pay', $can_pay, $object_type, $object_id, $user_id);
+    }
+
     //---------- PROCESSING FUNCTIONS -------------------------------------------------------------------------------------------------------------------------/
 
     public function process_payment()
@@ -152,11 +171,7 @@ class CUAR_PaymentsUiHelper
         }
 
         // The object must be payable, and the current user must be allowed to pay for it
-        $can_pay = is_user_logged_in()
-            && in_array($object_type, $this->pa_addon->get_payable_types(), true)
-            && get_post_type($object_id) === $object_type
-            && cuar_addon('post-owner')->is_user_owner_of_post($object_id, get_current_user_id());
-        if ( !apply_filters('cuar/core/payments/can-pay', $can_pay, $object_type, $object_id, get_current_user_id()))
+        if ( !$this->can_current_user_pay_for($object_type, $object_id))
         {
             wp_die(__('You are not allowed to pay for this item.', 'cuar'), '', array('response' => 403));
         }

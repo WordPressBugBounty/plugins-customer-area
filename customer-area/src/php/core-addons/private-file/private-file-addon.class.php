@@ -844,8 +844,16 @@ if (!class_exists('CUAR_PrivateFileAddOn')) :
         public function ajax_attach_file()
         {
             $errors = [];
-            $method = isset($_POST['method']) ? sanitize_text_field($_POST['method']) : 0;
+            $method = isset($_POST['method']) ? sanitize_key($_POST['method']) : '';
             $post_id = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
+
+            // Only the methods offered to users can be used (server-side methods are for internal use)
+            $allowed_methods = apply_filters('cuar/private-content/files/select-methods', []);
+            if (!array_key_exists($method, $allowed_methods))
+            {
+                $errors[] = __('Trying to cheat?', 'cuar');
+                wp_send_json_error($errors);
+            }
 
             // Check nonce
             $nonce_action = 'cuar-attach-' . $method . '-' . $post_id;

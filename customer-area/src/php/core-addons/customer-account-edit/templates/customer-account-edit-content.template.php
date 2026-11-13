@@ -1,6 +1,9 @@
 <?php /**
- * Template version: 4.1.0
+ * Template version: 4.1.1
  * Template zone: frontend
+ *
+ * -= 4.1.1 =-
+ * - Escape the display name (security hardening)
  *
  * -= 4.1.0 =-
  * - Reduced width for customer-account-edit page based on cuar/private-content/view/max-width-for-forms
@@ -34,7 +37,7 @@ $cuar_content_max_width = $this->get_max_width_markup('inner_page', ['cuar-page-
             </div>
             <div class="media-body va-m" style="width: 100%;">
 
-                <div class="cuar-title media-heading text-primary"><?php echo $current_user->display_name; ?>
+                <div class="cuar-title media-heading text-primary"><?php echo esc_html($current_user->display_name); ?>
                     <small> - Profile</small>
                 </div>
 

@@ -564,11 +564,11 @@ if (!class_exists('CUAR_AbstractEditContentPageAddOn')) :
                 {
                     if (is_wp_error($error))
                     {
-                        printf('<p class="alert alert-warning">%s</p>', $error->get_error_message());
+                        printf('<p class="alert alert-warning">%s</p>', wp_kses_post($error->get_error_message()));
                     }
                     else if ($error !== false && !empty($error) && !is_array($error))
                     {
-                        printf('<p class="alert alert-info">%s</p>', $error);
+                        printf('<p class="alert alert-info">%s</p>', wp_kses_post($error));
                     }
                 }
             }
@@ -819,13 +819,13 @@ if (!class_exists('CUAR_AbstractEditContentPageAddOn')) :
         {
             if ($this->current_post_id === 0 || $this->current_post_id === null)
             {
-                if (isset($_POST['cuar_post_id']))
+                if (isset($_POST['cuar_post_id'])) // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked by the form handler
                 {
-                    $this->current_post_id = $_POST['cuar_post_id'];
+                    $this->current_post_id = absint($_POST['cuar_post_id']); // phpcs:ignore WordPress.Security.NonceVerification.Missing
                 }
                 else if (get_query_var('cuar_post_id', 0) > 0)
                 {
-                    $this->current_post_id = get_query_var('cuar_post_id', 0);
+                    $this->current_post_id = absint(get_query_var('cuar_post_id', 0));
                 }
                 else if (get_query_var('cuar_post_name', null) != null)
                 {

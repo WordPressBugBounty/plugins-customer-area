@@ -326,6 +326,9 @@ if ( !class_exists('CUAR_AbstractUpdateContentPageAddOn')) :
 
             $post_type = $this->get_friendly_post_type();
 
+            // Only content of this page's own post type can be deleted from here
+            if (get_post_type((int) $post_id) !== $post_type) return false;
+
             if (current_user_can($post_type . '_delete_any_content')) return true;
 
             $user_id = get_current_user_id();
@@ -362,6 +365,9 @@ if ( !class_exists('CUAR_AbstractUpdateContentPageAddOn')) :
             }
 
             $post_type = $this->get_friendly_post_type();
+
+            // Only content of this page's own post type can be edited from here
+            if (get_post_type((int) $post_id) !== $post_type) return false;
 
             if (current_user_can($post_type . '_update_any_content')) return true;
 

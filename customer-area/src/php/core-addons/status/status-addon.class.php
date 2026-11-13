@@ -218,6 +218,11 @@ if (!class_exists('CUAR_StatusAddOn')) :
                 return;
             }
 
+            if (!current_user_can('manage_options'))
+            {
+                wp_die(esc_html__('You are not allowed to do this.', 'cuar'), '', ['response' => 403]);
+            }
+
             $sections = $this->get_status_sections();
 
             foreach ($sections as $id => $section)

@@ -1,6 +1,9 @@
 <?php /**
- * Template version: 5.0.0
+ * Template version: 5.0.1
  * Template zone: frontend
+ *
+ * -= 5.0.1 =-
+ * - Escape the display name (security hardening)
  *
  * -= 5.0.0 =-
  * - Updated markup for masonry compatibility
@@ -38,7 +41,7 @@ $current_user = $this->get_current_user();
         </div>
         <div class="media-body va-m" style="width: 100%;">
 
-            <div class="cuar-title media-heading text-primary"><?php echo $current_user->display_name; ?>
+            <div class="cuar-title media-heading text-primary"><?php echo esc_html($current_user->display_name); ?>
                 <small> - <?php _e('Profile', 'cuar'); ?></small>
             </div>
 

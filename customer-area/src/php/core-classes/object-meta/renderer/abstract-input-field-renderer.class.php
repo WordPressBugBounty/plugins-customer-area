@@ -39,7 +39,7 @@ abstract class CUAR_AbstractInputFieldRenderer extends CUAR_AbstractFieldRendere
 	}
 
 	protected function get_readonly_field_value( $id, $value ) {
-		return $value;
+		return esc_html( $value );
 	}
 
 	protected function get_form_field_input( $id, $value ) {

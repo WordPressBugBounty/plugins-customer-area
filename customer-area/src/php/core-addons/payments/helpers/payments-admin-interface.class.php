@@ -137,8 +137,13 @@ if ( !class_exists('CUAR_PaymentsAdminInterface')) :
                 wp_die(__("Trying to cheat?", 'cuar'));
             }
 
-            $object_type = isset($_GET['object_type']) ? $_GET['object_type'] : '';
-            $object_id = isset($_GET['object_id']) ? $_GET['object_id'] : 0;
+            if ( !current_user_can('cuar_pay_edit'))
+            {
+                wp_die(esc_html__('You are not allowed to do this.', 'cuar'), '', array('response' => 403));
+            }
+
+            $object_type = isset($_GET['object_type']) ? sanitize_key($_GET['object_type']) : '';
+            $object_id = isset($_GET['object_id']) ? absint($_GET['object_id']) : 0;
             if (empty($object_type) || 0 == $object_id)
             {
                 wp_die(__("Invalid arguments. Cannot create payment.", 'cuar'));
