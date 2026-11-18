@@ -76,7 +76,14 @@ if (!class_exists('CUAR_PostOwnerAddOn')) :
             }
 
             add_action('cuar/core/on-plugin-update', [&$this, 'plugin_version_upgrade'], 10, 2);
+            add_action('init', [&$this, 'secure_private_storage'], 20);
         }
+
+        /** @var string Meta holding the random token that names the storage folder of a post */
+        public static $META_STORAGE_TOKEN = '_cuar_storage_token';
+
+        /** @var string Option tracking the storage protection and the folder migration */
+        public static $OPTION_STORAGE_SECURITY = 'cuar_storage_security';
 
         /**
          * @return CUAR_PostOwnerAjaxHelper
@@ -298,25 +305,21 @@ if (!class_exists('CUAR_PostOwnerAddOn')) :
          */
         public function get_private_storage_directory($post_id, $absolute = false, $create_dirs = false)
         {
+            $post_id = absint($post_id);
             if (empty($post_id))
             {
                 return false;
             }
 
-            // Do something to make a directory out of the post_id
-            $dir = md5('wpca-' . $post_id . md5(-$post_id * $post_id * $post_id));
-
-            if ($absolute)
-            {
-                $dir = $this->get_base_private_storage_directory() . "/" . $dir;
-            }
+            $dir = $this->get_storage_directory_name($post_id);
+            $absolute_dir = $this->get_base_private_storage_directory($create_dirs) . "/" . $dir;
 
             if ($create_dirs)
             {
                 $tries = 0;
-                while (!is_dir($dir) && $tries < 5)
+                while (!is_dir($absolute_dir) && $tries < 5)
                 {
-                    if (mkdir($dir, 0775, true) || is_dir($dir))
+                    if (mkdir($absolute_dir, 0775, true) || is_dir($absolute_dir))
                     {
                         break;
                     }
@@ -325,13 +328,161 @@ if (!class_exists('CUAR_PostOwnerAddOn')) :
                     sleep(1);
                 }
 
-                if (!is_dir($dir))
+                if (!is_dir($absolute_dir))
                 {
-                    throw new RuntimeException(sprintf('Directory "%s" was not created', $dir));
+                    throw new RuntimeException(sprintf('Directory "%s" was not created', $absolute_dir));
+                }
+
+                $this->protect_storage_folder($this->get_base_private_storage_directory());
+            }
+
+            return $absolute ? $absolute_dir : $dir;
+        }
+
+        /**
+         * Name of the storage folder of a post. It is derived from a random token saved in the post meta, so it cannot
+         * be computed from the post ID. A folder still using the old, predictable name is renamed on the fly.
+         *
+         * @param int $post_id
+         *
+         * @return string
+         */
+        private function get_storage_directory_name($post_id)
+        {
+            $legacy_dir = $this->get_predictable_storage_directory_name($post_id);
+
+            $token = get_post_meta($post_id, self::$META_STORAGE_TOKEN, true);
+            if (!is_string($token) || !preg_match('/^[a-f0-9]{32}$/', $token))
+            {
+                // Unknown post: keep the previous behaviour, there is nothing stored for it anyway
+                if (get_post($post_id) === null)
+                {
+                    return $legacy_dir;
+                }
+
+                delete_post_meta($post_id, self::$META_STORAGE_TOKEN);
+                add_post_meta($post_id, self::$META_STORAGE_TOKEN, bin2hex(random_bytes(16)), true);
+                wp_cache_delete($post_id, 'post_meta');
+                $token = get_post_meta($post_id, self::$META_STORAGE_TOKEN, true);
+            }
+
+            // The post ID is part of the hash, so a duplicated post (meta copied) gets its own folder
+            $dir = md5('wpca-' . $post_id . '-' . $token);
+
+            $base = $this->get_base_private_storage_directory();
+            if (!is_dir($base . '/' . $dir) && is_dir($base . '/' . $legacy_dir))
+            {
+                if (!@rename($base . '/' . $legacy_dir, $base . '/' . $dir))
+                {
+                    // Could not move the files: keep serving them from where they are
+                    return $legacy_dir;
                 }
             }
 
             return $dir;
+        }
+
+        /**
+         * Storage folder name used up to 8.4.5 (computable from the post ID). Only used to migrate existing folders.
+         *
+         * @param int $post_id
+         *
+         * @return string
+         */
+        private function get_predictable_storage_directory_name($post_id)
+        {
+            return md5('wpca-' . $post_id . md5(-$post_id * $post_id * $post_id));
+        }
+
+        /**
+         * Forbid direct web access to a folder: deny-all .htaccess (Apache) and an empty index.php. Existing files are
+         * never overwritten.
+         *
+         * @param string $dir
+         */
+        public function protect_storage_folder($dir)
+        {
+            if (empty($dir) || !is_dir($dir) || !wp_is_writable($dir))
+            {
+                return;
+            }
+
+            $dir = untrailingslashit($dir);
+
+            if (!file_exists($dir . '/.htaccess'))
+            {
+                @copy(trailingslashit(CUAR_PLUGIN_DIR) . 'extras/protect-folder.htaccess', $dir . '/.htaccess');
+            }
+
+            if (!file_exists($dir . '/index.php'))
+            {
+                @file_put_contents($dir . '/index.php', "<?php\n// Silence is golden.\n");
+            }
+        }
+
+        /**
+         * Protect the private storage folders and give every existing storage folder an unpredictable name. Runs once
+         * per plugin version, then in small batches until all the folders are migrated.
+         */
+        public function secure_private_storage()
+        {
+            $state = get_option(self::$OPTION_STORAGE_SECURITY, []);
+            if (!is_array($state))
+            {
+                $state = [];
+            }
+
+            if (($state['protected'] ?? '') !== CUAR_PLUGIN_VERSION)
+            {
+                $folders = [$this->get_base_private_storage_directory(), WP_CONTENT_DIR . '/customer-area/logs'];
+
+                /** @var CUAR_PrivateFileAddOn $pf_addon */
+                $pf_addon = $this->plugin->get_addon('private-files');
+                if ($pf_addon !== null && method_exists($pf_addon, 'get_ftp_path'))
+                {
+                    $folders[] = $pf_addon->get_ftp_path();
+                }
+
+                foreach ($folders as $folder)
+                {
+                    $this->protect_storage_folder($folder);
+                }
+
+                $state['protected'] = CUAR_PLUGIN_VERSION;
+                update_option(self::$OPTION_STORAGE_SECURITY, $state, true);
+            }
+
+            if (!empty($state['migrated']) || !is_admin() || wp_doing_ajax())
+            {
+                return;
+            }
+
+            global $wpdb;
+            $last_id = (int) ($state['last_id'] ?? 0);
+            $post_ids = $wpdb->get_col($wpdb->prepare(
+                "SELECT DISTINCT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s AND post_id > %d ORDER BY post_id ASC LIMIT 200",
+                'cuar_private_file_file',
+                $last_id
+            ));
+
+            $started = microtime(true);
+            foreach ($post_ids as $post_id)
+            {
+                $this->get_storage_directory_name((int) $post_id);
+                $last_id = (int) $post_id;
+
+                if (microtime(true) - $started > 5)
+                {
+                    break;
+                }
+            }
+
+            $state['last_id'] = $last_id;
+            if (empty($post_ids) || ($last_id === (int) end($post_ids) && count($post_ids) < 200))
+            {
+                $state['migrated'] = 1;
+            }
+            update_option(self::$OPTION_STORAGE_SECURITY, $state, true);
         }
 
         // region Deprecated support functions (change of storage directory structure in 6.2)

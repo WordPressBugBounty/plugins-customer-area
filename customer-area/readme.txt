@@ -6,7 +6,7 @@ Tags:               private files,client area,customer area,client portal,custom
 Requires at least:  5.0
 Requires PHP:       7.2
 Tested up to:       7.1
-Stable tag:         8.4.5
+Stable tag:         8.4.6
 License:            GPLv2 or later
 License URI:        http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -103,6 +103,12 @@ You have all the information on the [plugin website](https://wp-customerarea.com
 Open a new topic on the plugin's support forum, I will consider every feature request and all ideas are welcome.
 
 == Changelog ==
+
+= 8.4.6 (2026/11/17) =
+
+* Security: improved the protection of private file storage. Existing storage folders are updated automatically. Thanks to tama15924 (Patchstack) for reporting this. Updating is strongly recommended.
+* Security: updated the bundled Bootstrap JavaScript library. Thanks to Santh (Patchstack) for reporting this.
+* On nginx servers, we recommend denying direct web access to the wp-content/customer-area/storage folder in the server configuration.
 
 = 8.4.5 (2026/11/10) =
 

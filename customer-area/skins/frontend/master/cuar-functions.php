@@ -31,7 +31,7 @@ if (!function_exists('cuar_load_skin_scripts'))
 
             // BOOTSTRAP
             // --
-            'bootstrap.affix',
+            //'bootstrap.affix',
             'bootstrap.alert',
             'bootstrap.button',
             //'bootstrap.carousel',
@@ -39,7 +39,7 @@ if (!function_exists('cuar_load_skin_scripts'))
             'bootstrap.dropdown',
             'bootstrap.modal',
             //'bootstrap.popover',
-            'bootstrap.scrollspy',
+            //'bootstrap.scrollspy',
             'bootstrap.tab',
             'bootstrap.tooltip',
             'bootstrap.transition',
